@@ -20,7 +20,7 @@
             .footer-note.print-only { display: block !important; }
             .signature-row.print-only { display: flex !important; }
             .north-symbol { transform: scale(1) !important; transform-origin: top left !important; }
-            .text-editor-overlay, .drafts-modal-overlay { display: none !important; }
+            .text-editor-overlay, .drafts-modal-overlay, .restore-modal-overlay { display: none !important; }
             #headerTitleBlock { border-bottom: none !important; }
             .footer-note { border-top: none !important; }
         }
@@ -100,8 +100,8 @@
         .signature-row .sig-officer-name { display: block; font-size: 11px; font-weight: 500; color: #374151; margin-top: 2px; }
         .north-symbol { position: absolute; top: 8px; left: 8px; z-index: 10; pointer-events: none; transform: scale(0.6); transform-origin: top left; transition: transform 0.2s ease; }
 
-        .text-editor-overlay, .drafts-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .48); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
-        .text-editor-overlay.show, .drafts-modal-overlay.show { display: flex; }
+        .text-editor-overlay, .drafts-modal-overlay, .restore-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .48); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+        .text-editor-overlay.show, .drafts-modal-overlay.show, .restore-modal-overlay.show { display: flex; }
         .text-editor-box { background: #ffffff; border-radius: 16px; padding: 14px; width: 100%; max-width: 440px; box-shadow: 0 16px 48px rgba(0, 0, 0, .35); border: 1px solid #e5e7eb; }
         .text-editor-title { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .text-editor-hint { font-size: 10px; font-weight: 500; color: #6b7280; text-align: right; }
@@ -141,18 +141,6 @@
             50% { opacity: 0.55; transform: scale(1.15); }
         }
         .snap-pulse { animation: snapPulse 0.9s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
-
-        /* ⭐ Autosave badge */
-        .autosave-badge {
-            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-            z-index: 20; pointer-events: none;
-            background: rgba(16, 185, 129, 0.92); color: white; font-size: 10px;
-            font-weight: 700; padding: 4px 10px; border-radius: 9999px;
-            box-shadow: 0 2px 6px rgba(0,0,0,.2);
-            opacity: 0; transition: opacity .3s;
-            white-space: nowrap;
-        }
-        .autosave-badge.show { opacity: 1; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans p-2 md:p-6 text-gray-800" oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
@@ -170,15 +158,15 @@
                 <div>
                     <div id="headerTitleBlock" class="text-center pb-1.5 mb-2">
                         <h1 class="text-xl font-black tracking-wide uppercase text-black leading-tight">ലൊക്കേഷൻ സ്കെച്ച്</h1>
-                        <p class="text-xs font-semibold text-gray-800 mt-0.5" id="outHeaderInfo">പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ</p>
+                        <p class="text-xs font-semibold text-gray-800 mt-0.5" id="outHeaderInfo">-</p>
                     </div>
 
                     <div class="grid grid-cols-5 text-xs text-center font-bold" style="border: 1px solid #000; border-bottom: 2px solid #000;">
-                        <div class="border-r border-black p-1 bg-gray-50 info-cell">നമ്പർ: <span id="outNumber" class="block font-normal text-xs text-black">1</span></div>
-                        <div class="border-r border-black p-1 bg-gray-50 info-cell">ബ്ലോക്ക് നം: <span id="outBlock" class="block font-normal text-xs text-black">34</span></div>
-                        <div class="border-r border-black p-1 bg-gray-50 info-cell">തണ്ടപ്പേര് നം: <span id="outThandaper" class="block font-normal text-xs text-black">5678</span></div>
-                        <div class="border-r border-black p-1 bg-gray-50 info-cell">സർവ്വേ നം: <span id="outSurvey" class="block font-normal text-xs text-black">210/1<br>210/2</span></div>
-                        <div class="p-1 bg-gray-50 info-cell">വിസ്തീർണ്ണം: <span id="outExtent" class="block font-normal text-xs text-black">02.50 ആർസ്<br>01.75 ആർസ്</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">നമ്പർ: <span id="outNumber" class="block font-normal text-xs text-black">-</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">ബ്ലോക്ക് നം: <span id="outBlock" class="block font-normal text-xs text-black">-</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">തണ്ടപ്പേര് നം: <span id="outThandaper" class="block font-normal text-xs text-black">-</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">സർവ്വേ നം: <span id="outSurvey" class="block font-normal text-xs text-black">-</span></div>
+                        <div class="p-1 bg-gray-50 info-cell">വിസ്തീർണ്ണം: <span id="outExtent" class="block font-normal text-xs text-black">-</span></div>
                     </div>
 
                     <div class="name-row" style="border-top: none; border-bottom: 2px solid #000; margin-bottom: 8px;">
@@ -197,7 +185,6 @@
                     </div>
 
                     <div class="zoom-badge" id="zoomBadge">100%</div>
-                    <div class="autosave-badge" id="autosaveBadge">💾 Auto-saved</div>
 
                     <svg id="sketchSvg" width="550" height="580" viewBox="0 0 550 580" preserveAspectRatio="xMidYMid meet" class="w-full h-auto max-w-[550px]" style="touch-action: none;" draggable="false" oncontextmenu="return false;">
                         <defs id="svgDefs"></defs>
@@ -233,24 +220,24 @@
         <div class="bg-white px-3 pt-1 pb-3 rounded-2xl shadow-lg no-print border border-gray-200">
             <div id="tabDetails" class="hidden text-sm pt-2">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">വില്ലേജ് / താലൂക്ക് / ജില്ല</label><input type="text" id="inVillage" value="പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">വില്ലേജ് / താലൂക്ക് / ജില്ല</label><input type="text" id="inVillage" value="" placeholder="ഉദാ: പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">📋 തണ്ടപ്പേർ വിവരങ്ങൾ</h3></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">നമ്പർ</label><input type="text" id="inNumber" value="1" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">ബ്ലോക്ക് നമ്പർ</label><input type="text" id="inBlock" value="34" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">തണ്ടപ്പേര് നമ്പർ</label><input type="text" id="inThandaper" value="5678" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">നമ്പർ</label><input type="text" id="inNumber" value="" placeholder="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">ബ്ലോക്ക് നമ്പർ</label><input type="text" id="inBlock" value="" placeholder="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">തണ്ടപ്പേര് നമ്പർ</label><input type="text" id="inThandaper" value="" placeholder="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">ഉടമയുടെ പേര്</label><input type="text" id="inApplicantName" value="" placeholder="ഉദാ: രാമൻ നായർ" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">സർവ്വേ നമ്പർ <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inSurvey" value="210/1, 210/2" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">വിസ്തീർണ്ണം <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inExtent" value="02.50 ആർസ്, 01.75 ആർസ്" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">സർവ്വേ നമ്പർ <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inSurvey" value="" placeholder="ഉദാ: 210/1, 210/2" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">വിസ്തീർണ്ണം <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inExtent" value="" placeholder="ഉദാ: 02.50 ആർസ്, 01.75 ആർസ്" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">🏛️ സ്ഥാപന വിവരങ്ങൾ</h3></div>
                     <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">സ്ഥാപനത്തിന്റെ പേര്</label><input type="text" id="inInstitutionName" value="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div><label class="block text-xs font-semibold text-gray-600 mb-1">തീയതി</label><input type="date" id="inDate" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div><label class="block text-xs font-semibold text-gray-600 mb-1">വില്ലേജ് ഓഫീസറുടെ പേര്</label><input type="text" id="inVillageOfficer" value="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
                     <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">നാലതിരുകൾ:</h3></div>
-                    <div><label class="block text-[11px] text-gray-500">വടക്ക്</label><input type="text" id="inNorth" value="Sy. No. 210/4" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-[11px] text-gray-500">തെക്ക്</label><input type="text" id="inSouth" value="Sy. No. 210/5" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-[11px] text-gray-500">കിഴക്ക്</label><input type="text" id="inEast" value="Sy. No. 211/1" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
-                    <div><label class="block text-[11px] text-gray-500">പടിഞ്ഞാറ്</label><input type="text" id="inWest" value="Sy. No. 210/8" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
-                    <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mt-1">പ്രവേശന വഴി വിവരം</label><input type="text" id="inRoad" value="3 മീറ്റർ വീതിയുള്ള പഞ്ചായത്ത് വഴി" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">വടക്ക്</label><input type="text" id="inNorth" value="" placeholder="" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">തെക്ക്</label><input type="text" id="inSouth" value="" placeholder="" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">കിഴക്ക്</label><input type="text" id="inEast" value="" placeholder="" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">പടിഞ്ഞാറ്</label><input type="text" id="inWest" value="" placeholder="" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mt-1">പ്രവേശന വഴി വിവരം</label><input type="text" id="inRoad" value="" placeholder="" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
                 </div>
             </div>
 
@@ -278,9 +265,13 @@
                         </div>
                     </div>
 
-                    <div class="card-block grid grid-cols-2 gap-3">
-                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">വലിപ്പം: <span id="sizeVal">1</span></label><input type="range" id="sizeSlider" min="1" max="30" value="1" oninput="setSize(this.value)" class="w-full"></div>
-                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">സുതാര്യത: <span id="opacityVal">100</span>%</label><input type="range" id="opacitySlider" min="10" max="100" value="100" oninput="setOpacity(this.value)" class="w-full"></div>
+                    <!-- ⭐ Reordered: Eraser Type first, then Color, then Size/Opacity -->
+                    <div id="eraserTypeRow" class="hidden card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">ഇറേസർ തരം</label>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" id="eraser_line" onclick="setEraserType('line')" class="tool-btn active">➖ സ്ട്രോക്ക്</button>
+                            <button type="button" id="eraser_area" onclick="setEraserType('area')" class="tool-btn">⬤ ഏരിയ</button>
+                        </div>
                     </div>
 
                     <div class="card-block">
@@ -301,12 +292,9 @@
                         </div>
                     </div>
 
-                    <div id="eraserTypeRow" class="hidden card-block">
-                        <label class="block font-semibold text-gray-700 mb-1.5">ഇറേസർ തരം</label>
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <button type="button" id="eraser_line" onclick="setEraserType('line')" class="tool-btn active">➖ സ്ട്രോക്ക്</button>
-                            <button type="button" id="eraser_area" onclick="setEraserType('area')" class="tool-btn">⬤ ഏരിയ</button>
-                        </div>
+                    <div class="card-block grid grid-cols-2 gap-3">
+                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">വലിപ്പം: <span id="sizeVal">1</span></label><input type="range" id="sizeSlider" min="1" max="30" value="1" oninput="setSize(this.value)" class="w-full"></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">സുതാര്യത: <span id="opacityVal">100</span>%</label><input type="range" id="opacitySlider" min="10" max="100" value="100" oninput="setOpacity(this.value)" class="w-full"></div>
                     </div>
 
                     <div id="penTypeRow" class="card-block">
@@ -364,8 +352,8 @@
                             <button type="button" onclick="resetZoom()" class="tool-btn">↺ 100%</button>
                         </div>
                         <p class="text-[10px] text-gray-500 leading-tight pt-1">
-                            💾 <b>Auto-Save:</b> വരയ്ക്കുന്നത് തനിയെ save ആകും. Browser close ചെയ്ത് തുറന്നാലും <b>തിരികെ കിട്ടും</b>.<br>
-                            ⏱️ <b>Long-press → Select & Move:</b> ഏത് tool-ൽ നിന്നും sketch long-press ചെയ്താൽ select + move ചെയ്യാം.<br>
+                            💾 <b>Auto-Save:</b> Browser close ചെയ്താലും തിരികെ കിട്ടും.<br>
+                            ⏱️ <b>Long-press → Select & Move:</b> ഏത് tool-ൽ നിന്നും sketch long-press ചെയ്താൽ select + move.<br>
                             🔄 <b>തിരികെ പോകാൻ:</b> Select ആയതിന് ശേഷം <b>പുറത്ത് tap</b> ചെയ്യുക.
                         </p>
                     </div>
@@ -460,6 +448,27 @@
         </div>
     </div>
 
+    <!-- ⭐ RESTORE PROMPT MODAL -->
+    <div id="restoreModalOverlay" class="restore-modal-overlay">
+        <div class="text-editor-box" style="max-width: 400px;">
+            <div class="text-editor-title">
+                <span>🔄 പഴയ Sketch കണ്ടെത്തി</span>
+            </div>
+            <div style="font-size: 13px; color: #374151; line-height: 1.6; padding: 4px 0 10px 0;">
+                <p style="margin-bottom: 8px;">
+                    <b>മുൻപ് വരച്ച sketch</b> auto-save ചെയ്തിട്ടുണ്ട്.
+                </p>
+                <p style="font-size: 11px; color: #6b7280;">
+                    തുടരണോ? അതോ പുതിയ sketch തുടങ്ങണോ?
+                </p>
+            </div>
+            <div class="text-editor-actions">
+                <button type="button" onclick="declineRestore()" class="te-btn te-danger" style="flex: 1;">❌ പുതിയത്</button>
+                <button type="button" onclick="acceptRestore()" class="te-btn te-primary" style="flex: 1;">✅ തുടരുക</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SVG_NS = 'http://www.w3.org/2000/svg';
         const BASE_W = 550, BASE_H = 580;
@@ -538,15 +547,39 @@
         const AUTOSAVE_KEY = 'villageSketch_autosave_v1';
         let autoSaveTimer = null;
         let isRestoringFromDraft = false;
-        let autosaveBadgeTimer = null;
+        let isInitializing = true;   /* ← Blocks auto-save until init finishes */
 
-        function showAutosaveBadge(text) {
-            const badge = document.getElementById('autosaveBadge');
-            if (!badge) return;
-            badge.textContent = text || '💾 Auto-saved';
-            badge.classList.add('show');
-            clearTimeout(autosaveBadgeTimer);
-            autosaveBadgeTimer = setTimeout(() => badge.classList.remove('show'), 1200);
+        /* ============================================================
+           RESTORE PROMPT
+           ============================================================ */
+        function showRestoreModal() {
+            const m = document.getElementById('restoreModalOverlay');
+            if (m) m.classList.add('show');
+        }
+        function hideRestoreModal() {
+            const m = document.getElementById('restoreModalOverlay');
+            if (m) m.classList.remove('show');
+        }
+        function acceptRestore() {
+            hideRestoreModal();
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    deserializeSketch(data);
+                    showToast('🔄 മുൻപ് വരച്ചത് തിരികെ കിട്ടി ✓');
+                }
+            } catch (e) {
+                console.warn('Restore failed:', e);
+                showToast('⚠️ Restore പരാജയം');
+            }
+            isInitializing = false;
+        }
+        function declineRestore() {
+            hideRestoreModal();
+            try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+            showToast('🆕 പുതിയ sketch');
+            isInitializing = false;
         }
 
         /* ============================================================
@@ -596,7 +629,6 @@
 
         function getShapeAnchorsAndEdges() {
             if (shapeAnchorCache) return shapeAnchorCache;
-
             const anchors = [];
             const edges = [];
 
@@ -623,7 +655,7 @@
                         const w = parseFloat(shape.getAttribute('width'));
                         const h = parseFloat(shape.getAttribute('height'));
                         if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h)) return;
-                        localPts.push({ x: x, y: y }, { x: x + w, y: y }, { x: x + w, y: y + h }, { x: x, y: y + h });
+                        localPts.push({ x, y }, { x: x + w, y }, { x: x + w, y: y + h }, { x, y: y + h });
                     } else if (tag === 'line') {
                         const x1 = parseFloat(shape.getAttribute('x1'));
                         const y1 = parseFloat(shape.getAttribute('y1'));
@@ -671,7 +703,7 @@
                     for (let i = 0; i < worldPts.length; i++) {
                         const a = worldPts[i];
                         const b = worldPts[(i + 1) % worldPts.length];
-                        edges.push({ a: a, b: b, group: g });
+                        edges.push({ a, b, group: g });
                     }
                 });
             });
@@ -680,9 +712,7 @@
             return shapeAnchorCache;
         }
 
-        function invalidateShapeAnchorCache() {
-            shapeAnchorCache = null;
-        }
+        function invalidateShapeAnchorCache() { shapeAnchorCache = null; }
 
         function closestPointOnSegment(pt, a, b) {
             const dx = b.x - a.x, dy = b.y - a.y;
@@ -697,19 +727,16 @@
             if (!roadSnapEnabled) return null;
             let best = null, bestDist = ROAD_SNAP_RADIUS;
 
-            const roadEndpoints = getAllRoadEndpoints();
-            roadEndpoints.forEach(ep => {
+            getAllRoadEndpoints().forEach(ep => {
                 const d = Math.hypot(ep.x - pt.x, ep.y - pt.y);
                 if (d < bestDist) { bestDist = d; best = ep; }
             });
 
             const { anchors, edges } = getShapeAnchorsAndEdges();
-
             anchors.forEach(a => {
                 const d = Math.hypot(a.x - pt.x, a.y - pt.y);
                 if (d < bestDist) { bestDist = d; best = a; }
             });
-
             edges.forEach(e => {
                 const cp = closestPointOnSegment(pt, e.a, e.b);
                 const d = Math.hypot(cp.x - pt.x, cp.y - pt.y);
@@ -869,12 +896,7 @@
                 });
 
                 if (data.svg.viewBox && data.svg.viewBox.w) {
-                    viewBox = {
-                        x: data.svg.viewBox.x,
-                        y: data.svg.viewBox.y,
-                        w: data.svg.viewBox.w,
-                        h: data.svg.viewBox.h
-                    };
+                    viewBox = { x: data.svg.viewBox.x, y: data.svg.viewBox.y, w: data.svg.viewBox.w, h: data.svg.viewBox.h };
                     applyViewBox();
                 } else {
                     resetZoom();
@@ -905,48 +927,26 @@
                 console.error('Deserialize failed:', err);
                 return false;
             } finally {
-                setTimeout(() => { isRestoringFromDraft = false; }, 100);
+                setTimeout(() => { isRestoringFromDraft = false; }, 500);
             }
         }
 
-        /* ⭐⭐⭐ AUTO-SAVE FUNCTIONS ⭐⭐⭐ */
         function scheduleAutoSave() {
-            if (isRestoringFromDraft) return;
+            if (isRestoringFromDraft || isInitializing) return;
             if (autoSaveTimer) clearTimeout(autoSaveTimer);
             autoSaveTimer = setTimeout(performAutoSave, 800);
         }
 
         function performAutoSave() {
             autoSaveTimer = null;
+            if (isRestoringFromDraft || isInitializing) return;
             try {
                 const data = serializeSketch('Autosave');
                 localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
-                showAutosaveBadge('💾 Auto-saved');
+                /* ⭐ No badge shown — silent auto-save */
             } catch (e) {
                 console.warn('Auto-save failed:', e);
-                showAutosaveBadge('⚠️ Save failed');
             }
-        }
-
-        function tryRestoreAutosave() {
-            try {
-                const raw = localStorage.getItem(AUTOSAVE_KEY);
-                if (!raw) return false;
-                const data = JSON.parse(raw);
-                if (!data || !data.svg) return false;
-
-                const userHTML = data.svg.userDrawnLayerHTML || '';
-                const lmHTML = data.svg.landmarksLayerHTML || '';
-                const hasContent = (userHTML.indexOf('<') !== -1) || (lmHTML.indexOf('<') !== -1);
-
-                if (hasContent && deserializeSketch(data)) {
-                    showToast('🔄 മുൻപ് വരച്ചത് തിരികെ കിട്ടി ✓');
-                    return true;
-                }
-            } catch (e) {
-                console.warn('Auto-restore failed:', e);
-            }
-            return false;
         }
 
         function clearAutosave() {
@@ -958,16 +958,11 @@
             clearAutosave();
             clearUserDrawn();
 
-            /* Reset form fields to defaults */
             const defaults = {
-                inVillage: 'പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ',
-                inNumber: '1', inBlock: '34', inThandaper: '5678',
-                inApplicantName: '', inSurvey: '210/1, 210/2',
-                inExtent: '02.50 ആർസ്, 01.75 ആർസ്',
+                inVillage: '', inNumber: '', inBlock: '', inThandaper: '',
+                inApplicantName: '', inSurvey: '', inExtent: '',
                 inInstitutionName: '', inDate: '', inVillageOfficer: '',
-                inNorth: 'Sy. No. 210/4', inSouth: 'Sy. No. 210/5',
-                inEast: 'Sy. No. 211/1', inWest: 'Sy. No. 210/8',
-                inRoad: '3 മീറ്റർ വീതിയുള്ള പഞ്ചായത്ത് വഴി'
+                inNorth: '', inSouth: '', inEast: '', inWest: '', inRoad: ''
             };
             Object.keys(defaults).forEach(id => {
                 const el = document.getElementById(id);
@@ -981,7 +976,6 @@
             showToast('🆕 പുതിയ sketch തുടങ്ങി');
         }
 
-        /* ⭐ Save Draft (named) */
         function saveDraft() {
             let defaultName = 'Draft ' + new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
             const name = prompt('Draft name:', defaultName);
@@ -995,7 +989,7 @@
                 return;
             }
             const idx = getDraftsIndex();
-            idx.push({ id: id, name: data.name, savedAt: data.savedAt });
+            idx.push({ id, name: data.name, savedAt: data.savedAt });
             setDraftsIndex(idx);
             showToast('💾 Draft save ചെയ്തു ✓');
         }
@@ -1158,10 +1152,7 @@
             return batch;
         }
 
-        function ensureCurrentBatch() {
-            if (!currentBatch) currentBatch = createBatch();
-            return currentBatch;
-        }
+        function ensureCurrentBatch() { if (!currentBatch) currentBatch = createBatch(); return currentBatch; }
 
         function prepareForNewDraw() {
             if (pendingErase) { currentBatch = null; pendingErase = false; }
@@ -1234,10 +1225,7 @@
             const svg = document.getElementById('sketchSvg');
             const rect = svg.getBoundingClientRect();
             if (rect.width === 0 || rect.height === 0) return { fx: 0.5, fy: 0.5 };
-            return {
-                fx: (clientPt.x - rect.left) / rect.width,
-                fy: (clientPt.y - rect.top) / rect.height
-            };
+            return { fx: (clientPt.x - rect.left) / rect.width, fy: (clientPt.y - rect.top) / rect.height };
         }
 
         function showZoomBadge() {
@@ -1263,10 +1251,7 @@
             cancelActiveDrawing();
 
             if (longPressMoveState) {
-                if (transformStartSnapshots) {
-                    pushTransformHistory(transformStartSnapshots);
-                    transformStartSnapshots = null;
-                }
+                if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
                 longPressMoveState = null;
             }
 
@@ -1313,9 +1298,7 @@
             return true;
         }
 
-        function endPinch() {
-            pinchState = null;
-        }
+        function endPinch() { pinchState = null; }
 
         function cleanRoadPoints(points) {
             if (points.length < 2) return points.slice();
@@ -1836,9 +1819,7 @@
             const sp = getSvgCoordinates(e);
             transformStartSnapshots = snapshotTransforms(lassoSelection);
             resizeState = {
-                handle, startPt: sp,
-                actualBBox: actualBBox,
-                displayBBox: displayBBox,
+                handle, startPt: sp, actualBBox, displayBBox,
                 elements: lassoSelection.map(el => {
                     const d = getElementTransform(el);
                     const l = getElementLocalCenter(el);
@@ -1869,7 +1850,6 @@
 
             const scX = nActualW / ab.width;
             const scY = nActualH / ab.height;
-
             const nCx = nActualX + nActualW / 2, nCy = nActualY + nActualH / 2;
             const oldCx = ab.x + ab.width / 2, oldCy = ab.y + ab.height / 2;
 
@@ -1884,10 +1864,7 @@
         }
 
         function stopResize() {
-            if (transformStartSnapshots) {
-                pushTransformHistory(transformStartSnapshots);
-                transformStartSnapshots = null;
-            }
+            if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
             resizeState = null;
             document.removeEventListener('pointermove', onResize);
             document.removeEventListener('pointerup', stopResize);
@@ -1930,10 +1907,7 @@
 
         function stopSelectionMove() {
             if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
-            if (transformStartSnapshots) {
-                pushTransformHistory(transformStartSnapshots);
-                transformStartSnapshots = null;
-            }
+            if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
             selectionMoveState = null;
             document.removeEventListener('pointermove', onSelectionMove);
             document.removeEventListener('pointerup', stopSelectionMove);
@@ -1992,10 +1966,7 @@
         }
 
         function stopSelectionRotate() {
-            if (transformStartSnapshots) {
-                pushTransformHistory(transformStartSnapshots);
-                transformStartSnapshots = null;
-            }
+            if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
             isRotatingSelection = false;
             selectionRotateState = null;
             lastRotateEvent = null;
@@ -2072,7 +2043,7 @@
         }
 
         function updateSketch() {
-            document.getElementById('outHeaderInfo').innerText = document.getElementById('inVillage').value;
+            document.getElementById('outHeaderInfo').innerText = document.getElementById('inVillage').value || '-';
             document.getElementById('outNumber').innerText = document.getElementById('inNumber').value || '-';
             document.getElementById('outBlock').innerText = document.getElementById('inBlock').value || '-';
             document.getElementById('outThandaper').innerText = document.getElementById('inThandaper').value || '-';
@@ -2229,7 +2200,7 @@
 
                 const svgPt = getSvgCoordinates(e);
                 longPressMoveState = {
-                    pointerId: pointerId,
+                    pointerId,
                     startPt: { x: svgPt.x, y: svgPt.y },
                     elements: lassoSelection.map(el => {
                         const d = getElementTransform(el);
@@ -2246,10 +2217,8 @@
                 const cp = getClientPoint(e);
                 const dist = Math.hypot(cp.x - longPressStartPt.x, cp.y - longPressStartPt.y);
                 if (dist > 10) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                    longPressElement = null;
-                    longPressStartPt = null;
+                    clearTimeout(longPressTimer); longPressTimer = null;
+                    longPressElement = null; longPressStartPt = null;
                 }
             }
 
@@ -2267,18 +2236,12 @@
         }
 
         function onGlobalPointerUp(e) {
-            if (longPressTimer) {
-                clearTimeout(longPressTimer);
-                longPressTimer = null;
-            }
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
             longPressElement = null;
             longPressStartPt = null;
 
             if (longPressMoveState && (e.pointerId === undefined || e.pointerId === longPressMoveState.pointerId)) {
-                if (transformStartSnapshots) {
-                    pushTransformHistory(transformStartSnapshots);
-                    transformStartSnapshots = null;
-                }
+                if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
                 longPressMoveState = null;
             }
         }
@@ -2323,33 +2286,24 @@
                 activePointers.clear();
                 activePointers.set('t0', { x: e.touches[0].clientX, y: e.touches[0].clientY });
                 activePointers.set('t1', { x: e.touches[1].clientX, y: e.touches[1].clientY });
-                cancelActiveDrawing();
-                startPinch();
-                return;
+                cancelActiveDrawing(); startPinch(); return;
             }
-            if (e.touches.length === 1 && !pinchState) {
-                onCanvasDown(e);
-            }
+            if (e.touches.length === 1 && !pinchState) onCanvasDown(e);
         }
         function onTouchMoveFallback(e) {
             if (e.touches.length === 2 && pinchState) {
                 e.preventDefault();
                 activePointers.set('t0', { x: e.touches[0].clientX, y: e.touches[0].clientY });
                 activePointers.set('t1', { x: e.touches[1].clientX, y: e.touches[1].clientY });
-                updatePinch();
-                return;
+                updatePinch(); return;
             }
-            if (e.touches.length === 1 && isDrawing) {
-                onCanvasMove(e);
-            }
+            if (e.touches.length === 1 && isDrawing) onCanvasMove(e);
         }
         function onTouchEndFallback(e) {
             if (e.touches.length < 2) {
                 if (pinchState) { endPinch(); activePointers.clear(); return; }
             }
-            if (e.touches.length === 0) {
-                onCanvasUp(e);
-            }
+            if (e.touches.length === 0) onCanvasUp(e);
         }
 
         function isLeftMouseButton(e) {
@@ -2360,16 +2314,9 @@
         }
 
         function onCanvasDown(e) {
-            if (e.pointerId !== undefined) {
-                activePointers.set(e.pointerId, getClientPoint(e));
-            }
+            if (e.pointerId !== undefined) activePointers.set(e.pointerId, getClientPoint(e));
 
-            if (activePointers.size === 2) {
-                e.preventDefault();
-                cancelActiveDrawing();
-                startPinch();
-                return;
-            }
+            if (activePointers.size === 2) { e.preventDefault(); cancelActiveDrawing(); startPinch(); return; }
             if (activePointers.size > 2) { e.preventDefault(); return; }
 
             if (!isLeftMouseButton(e)) return;
@@ -2386,8 +2333,7 @@
 
                 if (lassoSelection.length > 0 && isPointInSelection(pt)) {
                     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
-                    startSelectionMove(e);
-                    return;
+                    startSelectionMove(e); return;
                 }
 
                 const clickedEl = target.closest ? target.closest('.draggable-element') : null;
@@ -2424,10 +2370,7 @@
                     if (node.classList && node.classList.contains('text-item')) { textEl = node; break; }
                     node = node.parentNode;
                 }
-                if (textEl) {
-                    openTextEditor({ elementId: textEl.id, initialText: getStoredText(textEl) });
-                    return;
-                }
+                if (textEl) { openTextEditor({ elementId: textEl.id, initialText: getStoredText(textEl) }); return; }
                 addTextLabel(pt.x, pt.y);
                 return;
             }
@@ -2447,15 +2390,9 @@
         }
 
         function onCanvasMove(e) {
-            if (e.pointerId !== undefined && activePointers.has(e.pointerId)) {
-                activePointers.set(e.pointerId, getClientPoint(e));
-            }
+            if (e.pointerId !== undefined && activePointers.has(e.pointerId)) activePointers.set(e.pointerId, getClientPoint(e));
 
-            if (pinchState && activePointers.size >= 2) {
-                e.preventDefault();
-                updatePinch();
-                return;
-            }
+            if (pinchState && activePointers.size >= 2) { e.preventDefault(); updatePinch(); return; }
 
             if (!isDrawing) return;
             if (e.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) return;
@@ -2479,10 +2416,7 @@
             isDrawing = false;
             const pt = getSvgCoordinates(e);
 
-            if (currentMode === 'eraser') {
-                lastErasePt = null;
-                finalizeEraserStroke();
-            }
+            if (currentMode === 'eraser') { lastErasePt = null; finalizeEraserStroke(); }
             else if (currentMode === 'pen' || currentMode === 'highlighter') {
                 const lastPt = freehandPoints[freehandPoints.length - 1];
                 if (!lastPt || Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) > 0.5) freehandPoints.push(pt);
@@ -2557,7 +2491,6 @@
                 if (isRoadShapeType(currentShapeType)) {
                     const startSnap = findSnapPoint(drawStartPt);
                     if (startSnap) drawSnapIndicator(layer, startSnap, drawStartPt, false);
-
                     const endSnap = findSnapPoint(pt);
                     if (endSnap) drawSnapIndicator(layer, endSnap, pt, true);
                 }
@@ -2614,23 +2547,14 @@
             if (roadPoints.length < 2) return;
 
             let snappedStart = null, snappedEnd = null;
-
             if (roadSnapEnabled) {
                 for (let i = roadPoints.length - 1; i >= Math.max(0, roadPoints.length - 5); i--) {
                     const s = findSnapPoint(roadPoints[i]);
-                    if (s) {
-                        snappedEnd = s;
-                        if (i < roadPoints.length - 1) roadPoints.length = i + 1;
-                        break;
-                    }
+                    if (s) { snappedEnd = s; if (i < roadPoints.length - 1) roadPoints.length = i + 1; break; }
                 }
                 for (let i = 0; i < Math.min(5, roadPoints.length); i++) {
                     const s = findSnapPoint(roadPoints[i]);
-                    if (s) {
-                        snappedStart = s;
-                        if (i > 0) roadPoints.splice(0, i);
-                        break;
-                    }
+                    if (s) { snappedStart = s; if (i > 0) roadPoints.splice(0, i); break; }
                 }
                 if (snappedStart) roadPoints[0] = { x: snappedStart.x, y: snappedStart.y };
                 if (snappedEnd) roadPoints[roadPoints.length - 1] = { x: snappedEnd.x, y: snappedEnd.y };
@@ -2657,11 +2581,8 @@
 
             registerDrawn(g);
 
-            if (snappedStart || snappedEnd) {
-                showShapeToast('വഴി ചേർത്തു ✓');
-            } else {
-                showShapeToast('വഴി വരച്ചു ✓');
-            }
+            if (snappedStart || snappedEnd) showShapeToast('വഴി ചേർത്തു ✓');
+            else showShapeToast('വഴി വരച്ചു ✓');
         }
 
         function commitShape(endPt) {
@@ -2691,9 +2612,7 @@
 
             registerDrawn(g);
 
-            if (snappedStart || snappedEnd) {
-                showToast('✨ ചേർത്തു ✓');
-            }
+            if (snappedStart || snappedEnd) showToast('✨ ചേർത്തു ✓');
         }
 
         function escapeXml(s) { return String(s).replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[ch])); }
@@ -2766,9 +2685,7 @@
             scheduleAutoSave();
         }
 
-        function addTextLabel(x, y) {
-            openTextEditor({ x: x, y: y, initialText: '' });
-        }
+        function addTextLabel(x, y) { openTextEditor({ x, y, initialText: '' }); }
 
         function openTextEditor(opts) {
             const now = Date.now();
@@ -2788,11 +2705,7 @@
             overlay.classList.add('show');
 
             setTimeout(function () {
-                try {
-                    input.focus();
-                    const len = input.value.length;
-                    input.setSelectionRange(len, len);
-                } catch (err) { }
+                try { input.focus(); const len = input.value.length; input.setSelectionRange(len, len); } catch (err) {}
             }, 40);
         }
 
@@ -2819,10 +2732,7 @@
 
         function editSelectedText() {
             const el = lassoSelection.find(function (x) { return x.classList && x.classList.contains('text-item'); });
-            if (!el) {
-                showToast('⚠️ ആദ്യം ഒരു ടെക്സ്റ്റ് സെലക്ട് ചെയ്യുക');
-                return;
-            }
+            if (!el) { showToast('⚠️ ആദ്യം ഒരു ടെക്സ്റ്റ് സെലക്ട് ചെയ്യുക'); return; }
             openTextEditor({ elementId: el.id, initialText: getStoredText(el) });
         }
 
@@ -2838,18 +2748,11 @@
             cancelBtn.addEventListener('click', closeTextEditor);
             delBtn.addEventListener('click', deleteTextFromEditor);
 
-            overlay.addEventListener('pointerdown', function (e) {
-                if (e.target === overlay) closeTextEditor();
-            });
+            overlay.addEventListener('pointerdown', function (e) { if (e.target === overlay) closeTextEditor(); });
 
             input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    confirmTextEditor();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    closeTextEditor();
-                }
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); confirmTextEditor(); }
+                else if (e.key === 'Escape') { e.preventDefault(); closeTextEditor(); }
                 e.stopPropagation();
             });
             input.addEventListener('keyup', function (e) { e.stopPropagation(); });
@@ -2965,19 +2868,14 @@
             } else if (item.type === 'erase-elements') {
                 item.items.forEach(it => {
                     if (it.parent) {
-                        if (it.nextSibling && it.nextSibling.parentNode === it.parent) {
-                            it.parent.insertBefore(it.node, it.nextSibling);
-                        } else {
-                            it.parent.appendChild(it.node);
-                        }
+                        if (it.nextSibling && it.nextSibling.parentNode === it.parent) it.parent.insertBefore(it.node, it.nextSibling);
+                        else it.parent.appendChild(it.node);
                     }
                 });
                 redoStack.push(item);
                 renderSelectionOverlay();
             } else if (item.type === 'erase-marks') {
-                item.marks.forEach(m => {
-                    if (m.node && m.node.parentNode) m.node.parentNode.removeChild(m.node);
-                });
+                item.marks.forEach(m => { if (m.node && m.node.parentNode) m.node.parentNode.removeChild(m.node); });
                 redoStack.push(item);
             } else {
                 if (item.node) item.node.remove();
@@ -2998,13 +2896,9 @@
                 item.changes.forEach(c => { if (c.el && c.el.parentNode) c.el.setAttribute('transform', c.after); });
                 if (lassoSelection.length > 0) renderSelectionOverlay();
             } else if (item.type === 'erase-elements') {
-                item.items.forEach(it => {
-                    if (it.node && it.node.parentNode) it.node.parentNode.removeChild(it.node);
-                });
+                item.items.forEach(it => { if (it.node && it.node.parentNode) it.node.parentNode.removeChild(it.node); });
             } else if (item.type === 'erase-marks') {
-                item.marks.forEach(m => {
-                    if (m.parent) m.parent.appendChild(m.node);
-                });
+                item.marks.forEach(m => { if (m.parent) m.parent.appendChild(m.node); });
             } else {
                 if (item.parent && item.node) item.parent.appendChild(item.node);
             }
@@ -3041,18 +2935,12 @@
             document.getElementById('userDrawnLayer').innerHTML = '';
             document.getElementById('landmarksLayer').innerHTML = '';
             document.getElementById('svgDefs').innerHTML = '';
-            batchCounter = 0;
-            currentBatch = null;
-            allBatchMarksGroups = [];
-            pendingErase = false;
-            drawnElementsHistory = [];
-            redoStack = [];
-            lastErasePt = null;
-            transformStartSnapshots = null;
-            eraserStrokeMarks = null;
-            eraserStrokeRemoved = null;
-            previousToolBeforeLongPress = null;
-            longPressMoveState = null;
+            batchCounter = 0; currentBatch = null;
+            allBatchMarksGroups = []; pendingErase = false;
+            drawnElementsHistory = []; redoStack = [];
+            lastErasePt = null; transformStartSnapshots = null;
+            eraserStrokeMarks = null; eraserStrokeRemoved = null;
+            previousToolBeforeLongPress = null; longPressMoveState = null;
             invalidateShapeAnchorCache();
             clearSelection();
             updateUndoButtons();
@@ -3172,8 +3060,7 @@
 
                 if (lassoSelection.length > 0 && isPointInSelection(pt)) {
                     e.preventDefault(); e.stopPropagation();
-                    startSelectionMove(e);
-                    return;
+                    startSelectionMove(e); return;
                 }
 
                 e.preventDefault(); e.stopPropagation();
@@ -3217,10 +3104,7 @@
         }
 
         function stopElemDrag() {
-            if (transformStartSnapshots) {
-                pushTransformHistory(transformStartSnapshots);
-                transformStartSnapshots = null;
-            }
+            if (transformStartSnapshots) { pushTransformHistory(transformStartSnapshots); transformStartSnapshots = null; }
             activeElement = null;
             dragStartTransforms = new Map();
             document.removeEventListener('pointermove', onElemDrag);
@@ -3308,6 +3192,9 @@
         });
 
         function initApp() {
+            /* ⭐ Flag prevents auto-save during setup */
+            isInitializing = true;
+
             updateSketch();
             renderPolygon();
             initDrawingCanvas();
@@ -3332,13 +3219,10 @@
 
             document.querySelectorAll('.draggable-element').forEach(el => setupDraggable(el));
 
-            /* ⭐⭐⭐ RESTORE AUTOSAVE on page load ⭐⭐⭐ */
-            const restored = tryRestoreAutosave();
-
-            /* ⭐ Watch for any layer changes → auto-save */
+            /* ⭐ Watch for layer changes → auto-save */
             try {
                 const mo = new MutationObserver(function () {
-                    if (isRestoringFromDraft) return;
+                    if (isRestoringFromDraft || isInitializing) return;
                     scheduleAutoSave();
                 });
                 mo.observe(document.getElementById('userDrawnLayer'), { childList: true, subtree: true, attributes: true });
@@ -3346,24 +3230,24 @@
                 mo.observe(document.getElementById('svgDefs'), { childList: true, subtree: true });
             } catch (e) {}
 
-            /* ⭐ Auto-save form fields (debounced) */
+            /* ⭐ Auto-save form fields */
             document.querySelectorAll('input[type="text"], input[type="date"], select').forEach(el => {
                 el.addEventListener('input', scheduleAutoSave);
                 el.addEventListener('change', scheduleAutoSave);
             });
 
-            /* ⭐ Force save on page unload (browser close / refresh) */
+            /* ⭐ Force save on page unload */
             window.addEventListener('beforeunload', function () {
-                if (isRestoringFromDraft) return;
+                if (isRestoringFromDraft || isInitializing) return;
                 try {
                     const data = serializeSketch('Autosave');
                     localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
                 } catch (e) {}
             });
 
-            /* ⭐ Also save on visibility change (mobile app switch) */
+            /* ⭐ Save on visibility change */
             document.addEventListener('visibilitychange', function () {
-                if (document.hidden && !isRestoringFromDraft) {
+                if (document.hidden && !isRestoringFromDraft && !isInitializing) {
                     try {
                         const data = serializeSketch('Autosave');
                         localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
@@ -3371,9 +3255,26 @@
                 }
             });
 
-            if (!restored) {
-                /* Only on truly fresh start, show initial toast */
-                setTimeout(() => showToast('💾 Auto-save ON — വരയ്ക്കുമ്പോൾ തനിയെ save ആകും'), 600);
+            /* ⭐ Check for autosave and prompt user */
+            let hasAutosave = false;
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_KEY);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data && data.svg) {
+                        const userHTML = data.svg.userDrawnLayerHTML || '';
+                        const lmHTML = data.svg.landmarksLayerHTML || '';
+                        const formVillage = (data.forms && data.forms.inVillage) || '';
+                        const hasContent = (userHTML.indexOf('<') !== -1) || (lmHTML.indexOf('<') !== -1) || formVillage.trim().length > 0;
+                        if (hasContent) hasAutosave = true;
+                    }
+                }
+            } catch (e) {}
+
+            if (hasAutosave) {
+                showRestoreModal();
+            } else {
+                isInitializing = false;
             }
         }
 
