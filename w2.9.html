@@ -1,0 +1,3389 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>വില്ലേജ് ലൊക്കേഷൻ സ്കെച്ച്</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            @page { size: A4 portrait; margin: 4mm; }
+            .no-print { display: none !important; }
+            html, body { background: white !important; padding: 0 !important; margin: 0 !important; width: 100% !important; height: auto !important; }
+            .max-w-5xl { max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; gap: 0 !important; }
+            .bg-white.rounded-2xl { box-shadow: none !important; border: none !important; border-radius: 0 !important; overflow: visible !important; }
+            .print-area { border: none !important; box-shadow: none !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; display: block !important; }
+            #canvasContainer { width: 100% !important; max-width: 100% !important; padding: 4px !important; margin: 2px 0 0 0 !important; border: 2px solid #cbd5e1 !important; border-radius: 6px !important; box-sizing: border-box !important; }
+            #sketchSvg { width: 100% !important; height: auto !important; max-width: 100% !important; display: block !important; }
+            .max-w-5xl > div:first-child { page-break-inside: avoid !important; page-break-after: avoid !important; }
+            .footer-note, .signature-row { page-break-inside: avoid !important; }
+            .footer-note.print-only { display: block !important; }
+            .signature-row.print-only { display: flex !important; }
+            .north-symbol { transform: scale(1) !important; transform-origin: top left !important; }
+            .text-editor-overlay, .drafts-modal-overlay { display: none !important; }
+            #headerTitleBlock { border-bottom: none !important; }
+            .footer-note { border-top: none !important; }
+        }
+        * {
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            -webkit-user-drag: none; -khtml-user-drag: none; -moz-user-drag: none; -o-user-drag: none; user-drag: none;
+        }
+        input, textarea, select { -webkit-user-select: text; -moz-user-select: text; -ms-user-select: text; user-select: text; }
+        .grid-bg {
+            background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px),
+                              linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .handle { cursor: move; transition: r 0.15s ease, fill 0.15s ease; }
+        .handle:hover, .handle:active { r: 9; fill: #ef4444; }
+        .draggable-element { cursor: move; }
+        .draggable-element:hover { filter: drop-shadow(0px 0px 3px rgba(59, 130, 246, 0.85)); }
+        .selected-element { filter: drop-shadow(0 0 4px #2563eb) drop-shadow(0 0 1px #2563eb); }
+        .lasso-selected { filter: drop-shadow(0 0 3px #2563eb); }
+        .rotate-handle { cursor: grab; }
+        .rotate-handle:active { cursor: grabbing; }
+        .resize-handle { cursor: pointer; transition: fill 0.12s ease; }
+        .resize-handle:hover { fill: #2563eb; }
+        .tool-btn {
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            padding: 8px 6px; border-radius: 9999px; font-weight: 600; font-size: 11px;
+            border: 1px solid #e5e7eb; background: #f3f4f6; color: #1f2937;
+            transition: all .15s ease; line-height: 1.15; cursor: pointer;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+        }
+        .tool-btn:hover { background: #e5e7eb; }
+        .tool-btn.active { background: #2563eb; color: #ffffff; border-color: #1d4ed8; box-shadow: 0 1px 3px rgba(37, 99, 235, .4); }
+        .tool-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-autoshape { background: linear-gradient(135deg, #f59e0b, #ec4899) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(236, 72, 153, .35) !important; }
+        .btn-autoshape.active { background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 2px 8px rgba(16, 185, 129, .5) !important; }
+        .btn-road { background: linear-gradient(135deg, #64748b, #334155) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(51, 65, 85, .35) !important; }
+        .btn-road.active { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; box-shadow: 0 2px 8px rgba(14, 165, 233, .5) !important; }
+        .btn-snap { background: linear-gradient(135deg, #f97316, #ea580c) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(234, 88, 12, .35) !important; }
+        .btn-snap.active { background: linear-gradient(135deg, #10b981, #059669) !important; box-shadow: 0 2px 8px rgba(16, 185, 129, .5) !important; }
+        .btn-danger { background: #fee2e2 !important; color: #991b1b !important; border: 1px solid #fca5a5 !important; }
+        .btn-danger:hover { background: #fecaca !important; }
+        .btn-save { background: linear-gradient(135deg, #10b981, #059669) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(16, 185, 129, .35) !important; }
+        .btn-drafts { background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(124, 58, 237, .35) !important; }
+        .btn-export { background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(217, 119, 6, .35) !important; }
+        .btn-import { background: linear-gradient(135deg, #0ea5e9, #0284c7) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(2, 132, 199, .35) !important; }
+        .btn-fresh { background: linear-gradient(135deg, #dc2626, #b91c1c) !important; color: white !important; border: none !important; box-shadow: 0 2px 6px rgba(185, 28, 28, .35) !important; }
+        .swatch { width: 26px; height: 26px; border-radius: 9999px; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #cbd5e1; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        .swatch:hover { transform: scale(1.12); }
+        .swatch.active { box-shadow: 0 0 0 2px #2563eb; transform: scale(1.15); }
+        #sketchSvg { cursor: default; touch-action: none !important; -webkit-touch-callout: none !important; pointer-events: auto !important; display: block; }
+        #canvasContainer { touch-action: none !important; -webkit-touch-callout: none !important; }
+        #sketchSvg.mode-pen, #sketchSvg.mode-highlighter { cursor: crosshair; }
+        #sketchSvg.mode-shape, #sketchSvg.mode-road { cursor: crosshair; }
+        #sketchSvg.mode-lasso { cursor: crosshair; }
+        #sketchSvg.mode-eraser { cursor: cell; }
+        #sketchSvg.mode-text { cursor: text; }
+        #sketchSvg.mode-select { cursor: default; }
+        input[type=range] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: #e2e8f0; outline: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 0 0 1px #94a3b8; }
+        input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #2563eb; cursor: pointer; border: 2px solid #ffffff; }
+        .card-block { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 8px; }
+        .shape-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: rgba(16, 185, 129, .95); color: white; padding: 8px 20px; border-radius: 9999px; font-weight: bold; font-size: 12px; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        .shape-toast.show { opacity: 1; }
+        .road-help { font-size: 10px; line-height: 1.3; color: #475569; background: #eff6ff; border-left: 3px solid #3b82f6; padding: 5px 8px; border-radius: 6px; }
+        .tool-btn-sm { font-size: 10px !important; padding: 7px 4px !important; gap: 2px !important; }
+        .info-cell { line-height: 1.35; }
+        .name-row { background: #fef3c7; border: 1px solid #000; border-top: none; padding: 5px 8px; font-size: 11px; font-weight: 600; text-align: left; color: #1f2937; }
+        .print-only { display: none; }
+        .footer-note {
+            margin-top: 14px; padding: 8px 10px; font-size: 14px; font-weight: 600;
+            color: #1f2937; text-align: center;
+            background: #f3f4f6; line-height: 1.5;
+        }
+        .signature-row { justify-content: space-between; align-items: center; margin-top: 32px; padding: 0 12px 6px 12px; font-size: 13px; font-weight: 700; color: #1f2937; min-height: 28px; }
+        .signature-row .sig-left { text-align: left; min-width: 40%; }
+        .signature-row .sig-right { text-align: right; min-width: 40%; }
+        .signature-row .sig-officer-name { display: block; font-size: 11px; font-weight: 500; color: #374151; margin-top: 2px; }
+        .north-symbol { position: absolute; top: 8px; left: 8px; z-index: 10; pointer-events: none; transform: scale(0.6); transform-origin: top left; transition: transform 0.2s ease; }
+
+        .text-editor-overlay, .drafts-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .48); display: none; align-items: center; justify-content: center; z-index: 500; padding: 16px; -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+        .text-editor-overlay.show, .drafts-modal-overlay.show { display: flex; }
+        .text-editor-box { background: #ffffff; border-radius: 16px; padding: 14px; width: 100%; max-width: 440px; box-shadow: 0 16px 48px rgba(0, 0, 0, .35); border: 1px solid #e5e7eb; }
+        .text-editor-title { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .text-editor-hint { font-size: 10px; font-weight: 500; color: #6b7280; text-align: right; }
+        #textEditorInput { width: 100%; min-height: 100px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px; font-size: 15px; line-height: 1.55; color: #0f172a; background: #f8fafc; outline: none; font-family: inherit; box-sizing: border-box; }
+        #textEditorInput:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, .15); background: #ffffff; }
+        .text-editor-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .te-btn { flex: 1; padding: 10px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; border: 1px solid #e5e7eb; background: #f3f4f6; color: #1f2937; cursor: pointer; transition: all .15s ease; font-family: inherit; }
+        .te-btn:hover { background: #e5e7eb; }
+        .te-btn.te-primary { background: #2563eb; color: #ffffff; border-color: #1d4ed8; }
+        .te-btn.te-primary:hover { background: #1d4ed8; }
+        .te-btn.te-danger { background: #fee2e2; color: #991b1b; border-color: #fca5a5; flex: 0 0 auto; padding: 10px 14px; }
+        .te-btn.te-danger:hover { background: #fecaca; }
+        .te-btn.te-purple { background: #7c3aed; color: #ffffff; border-color: #6d28d9; }
+        .te-btn.te-purple:hover { background: #6d28d9; }
+
+        .zoom-badge {
+            position: absolute; top: 8px; right: 8px; z-index: 20; pointer-events: none;
+            background: rgba(37, 99, 235, 0.9); color: white; font-size: 10px;
+            font-weight: 700; padding: 4px 8px; border-radius: 9999px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+            opacity: 0; transition: opacity .25s;
+        }
+        .zoom-badge.show { opacity: 1; }
+
+        .draft-item {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px; padding: 10px 12px; border: 1px solid #e5e7eb;
+            border-radius: 10px; background: #f9fafb; transition: all .15s ease;
+        }
+        .draft-item:hover { background: #f3f4f6; border-color: #cbd5e1; }
+        .draft-name { font-weight: 700; font-size: 13px; color: #1f2937; word-break: break-word; }
+        .draft-meta { font-size: 10px; color: #6b7280; margin-top: 2px; }
+        .draft-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+        @keyframes snapPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.15); }
+        }
+        .snap-pulse { animation: snapPulse 0.9s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+
+        /* ⭐ Autosave badge */
+        .autosave-badge {
+            position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            z-index: 20; pointer-events: none;
+            background: rgba(16, 185, 129, 0.92); color: white; font-size: 10px;
+            font-weight: 700; padding: 4px 10px; border-radius: 9999px;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+            opacity: 0; transition: opacity .3s;
+            white-space: nowrap;
+        }
+        .autosave-badge.show { opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans p-2 md:p-6 text-gray-800" oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;">
+
+    <div class="max-w-5xl mx-auto flex flex-col gap-1">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
+            <div class="p-2 border-b border-gray-200 no-print bg-gray-50">
+                <div class="flex border-b text-xs font-semibold">
+                    <button type="button" id="tabBtnDetails" onclick="switchTab('details')" class="flex-1 text-center py-2 px-4 text-gray-500 hover:text-blue-600">തണ്ടപ്പേർ വിവരങ്ങൾ</button>
+                    <button type="button" id="tabBtnTools" onclick="switchTab('tools')" class="flex-1 text-center py-2 px-4 border-b-2 border-blue-600 text-blue-600 font-bold">ഡിസൈൻ & ടൂളുകൾ</button>
+                </div>
+            </div>
+
+            <div id="drawingAreaWrapper" class="px-2 pt-2 pb-0 print-area bg-white">
+                <div>
+                    <div id="headerTitleBlock" class="text-center pb-1.5 mb-2">
+                        <h1 class="text-xl font-black tracking-wide uppercase text-black leading-tight">ലൊക്കേഷൻ സ്കെച്ച്</h1>
+                        <p class="text-xs font-semibold text-gray-800 mt-0.5" id="outHeaderInfo">പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ</p>
+                    </div>
+
+                    <div class="grid grid-cols-5 text-xs text-center font-bold" style="border: 1px solid #000; border-bottom: 2px solid #000;">
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">നമ്പർ: <span id="outNumber" class="block font-normal text-xs text-black">1</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">ബ്ലോക്ക് നം: <span id="outBlock" class="block font-normal text-xs text-black">34</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">തണ്ടപ്പേര് നം: <span id="outThandaper" class="block font-normal text-xs text-black">5678</span></div>
+                        <div class="border-r border-black p-1 bg-gray-50 info-cell">സർവ്വേ നം: <span id="outSurvey" class="block font-normal text-xs text-black">210/1<br>210/2</span></div>
+                        <div class="p-1 bg-gray-50 info-cell">വിസ്തീർണ്ണം: <span id="outExtent" class="block font-normal text-xs text-black">02.50 ആർസ്<br>01.75 ആർസ്</span></div>
+                    </div>
+
+                    <div class="name-row" style="border-top: none; border-bottom: 2px solid #000; margin-bottom: 8px;">
+                        ഉടമയുടെ പേര് : <span id="outApplicantName" class="font-bold text-black">-</span>
+                    </div>
+                </div>
+
+                <div class="relative flex items-center justify-center border-2 border-gray-300 rounded-xl p-2 grid-bg mt-1 mb-0 overflow-hidden select-none" id="canvasContainer" style="touch-action: none;">
+                    <div class="north-symbol">
+                        <svg width="42" height="52" viewBox="0 0 40 50" style="pointer-events: none; display: block;">
+                            <polygon points="20,0 35,35 20,28" fill="#000" />
+                            <polygon points="20,0 5,35 20,28" fill="#888" />
+                            <line x1="20" y1="28" x2="20" y2="45" stroke="#000" stroke-width="2" />
+                            <text x="20" y="48" font-size="11" font-weight="bold" text-anchor="middle" fill="#000">N</text>
+                        </svg>
+                    </div>
+
+                    <div class="zoom-badge" id="zoomBadge">100%</div>
+                    <div class="autosave-badge" id="autosaveBadge">💾 Auto-saved</div>
+
+                    <svg id="sketchSvg" width="550" height="580" viewBox="0 0 550 580" preserveAspectRatio="xMidYMid meet" class="w-full h-auto max-w-[550px]" style="touch-action: none;" draggable="false" oncontextmenu="return false;">
+                        <defs id="svgDefs"></defs>
+
+                        <g id="roadGroup" pointer-events="none" style="display:none">
+                            <path id="roadBg" d="" fill="none" stroke="#64748b" stroke-width="24" stroke-linecap="butt"/>
+                            <path id="roadFg" d="" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="butt"/>
+                            <path id="roadCenter" d="" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4" stroke-linecap="butt"/>
+                            <text id="outRoad" x="430" y="520" font-size="10" font-weight="bold" fill="#1e293b" text-anchor="start"></text>
+                        </g>
+
+                        <polygon id="plotPolygon" points="" fill="#f8fafc" fill-opacity="0.85" stroke="#000000" stroke-width="3" pointer-events="none"/>
+
+                        <g id="userDrawnLayer"></g>
+                        <g id="landmarksLayer"></g>
+                        <g id="tempDrawLayer"></g>
+                        <g id="handlesGroup" class="no-print"></g>
+                        <g id="selectionOverlayGroup" class="no-print"></g>
+                    </svg>
+                </div>
+
+                <div class="footer-note print-only" id="footerNote">
+                    ഈ പ്ലാൻ <span id="outInstitutionName" class="font-bold text-black">.................</span> ഹാജരാക്കുന്നതിന് നൽകിയിട്ടുള്ളതാണ്
+                </div>
+
+                <div class="signature-row print-only">
+                    <div class="sig-left">തീയതി : <span id="outDate" class="font-bold text-black">-</span></div>
+                    <div class="sig-right">വില്ലേജ് ഓഫീസർ<span id="outVillageOfficer" class="sig-officer-name">-</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white px-3 pt-1 pb-3 rounded-2xl shadow-lg no-print border border-gray-200">
+            <div id="tabDetails" class="hidden text-sm pt-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">വില്ലേജ് / താലൂക്ക് / ജില്ല</label><input type="text" id="inVillage" value="പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">📋 തണ്ടപ്പേർ വിവരങ്ങൾ</h3></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">നമ്പർ</label><input type="text" id="inNumber" value="1" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">ബ്ലോക്ക് നമ്പർ</label><input type="text" id="inBlock" value="34" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">തണ്ടപ്പേര് നമ്പർ</label><input type="text" id="inThandaper" value="5678" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">ഉടമയുടെ പേര്</label><input type="text" id="inApplicantName" value="" placeholder="ഉദാ: രാമൻ നായർ" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">സർവ്വേ നമ്പർ <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inSurvey" value="210/1, 210/2" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">വിസ്തീർണ്ണം <span class="text-[10px] text-blue-600">(comma)</span></label><input type="text" id="inExtent" value="02.50 ആർസ്, 01.75 ആർസ്" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">🏛️ സ്ഥാപന വിവരങ്ങൾ</h3></div>
+                    <div class="md:col-span-2"><label class="block text-xs font-semibold text-gray-600 mb-1">സ്ഥാപനത്തിന്റെ പേര്</label><input type="text" id="inInstitutionName" value="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">തീയതി</label><input type="date" id="inDate" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-xs font-semibold text-gray-600 mb-1">വില്ലേജ് ഓഫീസറുടെ പേര്</label><input type="text" id="inVillageOfficer" value="" class="w-full border p-2 rounded-lg text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><hr class="my-1 border-gray-200"><h3 class="font-semibold text-gray-700 text-xs uppercase mb-2">നാലതിരുകൾ:</h3></div>
+                    <div><label class="block text-[11px] text-gray-500">വടക്ക്</label><input type="text" id="inNorth" value="Sy. No. 210/4" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">തെക്ക്</label><input type="text" id="inSouth" value="Sy. No. 210/5" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">കിഴക്ക്</label><input type="text" id="inEast" value="Sy. No. 211/1" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div><label class="block text-[11px] text-gray-500">പടിഞ്ഞാറ്</label><input type="text" id="inWest" value="Sy. No. 210/8" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                    <div class="md:col-span-2"><label class="block text-[11px] text-gray-500 mt-1">പ്രവേശന വഴി വിവരം</label><input type="text" id="inRoad" value="3 മീറ്റർ വീതിയുള്ള പഞ്ചായത്ത് വഴി" class="w-full border p-1.5 rounded text-xs" oninput="updateSketch()"></div>
+                </div>
+            </div>
+
+            <div id="tabTools" class="text-xs pt-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                    <div class="card-block space-y-2">
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" id="mode_pen" onclick="setMode('pen')" class="tool-btn active">✏️ പേന</button>
+                            <button type="button" id="mode_highlighter" onclick="setMode('highlighter')" class="tool-btn">🖍️ ഹൈലൈറ്റർ</button>
+                            <button type="button" id="mode_eraser" onclick="setMode('eraser')" class="tool-btn">🧽 ഇറേസർ</button>
+                            <button type="button" id="mode_lasso" onclick="setMode('lasso')" class="tool-btn">🎯 ലാസോ</button>
+                            <button type="button" id="mode_shape" onclick="setMode('shape')" class="tool-btn">⬜ ഷേപ്പ്</button>
+                            <button type="button" id="mode_text" onclick="setMode('text')" class="tool-btn">🅰️ എഴുത്ത്</button>
+                            <button type="button" id="mode_road" onclick="setMode('road')" class="tool-btn tool-btn-sm btn-road">🛣️ വഴി</button>
+                            <button type="button" id="mode_select" onclick="setMode('select')" class="tool-btn tool-btn-sm">🤏 സെലക്ട്</button>
+                            <button type="button" id="btnAutoShape" onclick="toggleShapeRecognition()" class="tool-btn tool-btn-sm btn-autoshape active">✨ ഓട്ടോ</button>
+                            <button type="button" id="btnUndo" onclick="undoDraw()" class="tool-btn tool-btn-sm">↩️ അൺഡൂ</button>
+                            <button type="button" id="btnRedo" onclick="redoDraw()" class="tool-btn tool-btn-sm">↪️ റീഡൂ</button>
+                            <button type="button" onclick="selectAllElements()" class="tool-btn tool-btn-sm">🔲 എല്ലാം</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="quickStraightRoad()" class="tool-btn tool-btn-sm btn-road">🛣️ നേർവഴി</button>
+                            <button type="button" id="btnRoadSnap" onclick="toggleRoadSnap()" class="tool-btn tool-btn-sm btn-snap active">🔗 Snap ✓</button>
+                            <button type="button" onclick="resetZoom()" class="tool-btn tool-btn-sm">🔍 100%</button>
+                        </div>
+                    </div>
+
+                    <div class="card-block grid grid-cols-2 gap-3">
+                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">വലിപ്പം: <span id="sizeVal">1</span></label><input type="range" id="sizeSlider" min="1" max="30" value="1" oninput="setSize(this.value)" class="w-full"></div>
+                        <div><label class="block text-[10px] font-semibold text-gray-600 mb-1">സുതാര്യത: <span id="opacityVal">100</span>%</label><input type="range" id="opacitySlider" min="10" max="100" value="100" oninput="setOpacity(this.value)" class="w-full"></div>
+                    </div>
+
+                    <div class="card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">നിറം</label>
+                        <div class="grid grid-cols-6 gap-1.5">
+                            <button type="button" class="swatch active" style="background:#0f172a" onclick="setColor('#0f172a', this)"></button>
+                            <button type="button" class="swatch" style="background:#475569" onclick="setColor('#475569', this)"></button>
+                            <button type="button" class="swatch" style="background:#dc2626" onclick="setColor('#dc2626', this)"></button>
+                            <button type="button" class="swatch" style="background:#ea580c" onclick="setColor('#ea580c', this)"></button>
+                            <button type="button" class="swatch" style="background:#ca8a04" onclick="setColor('#ca8a04', this)"></button>
+                            <button type="button" class="swatch" style="background:#16a34a" onclick="setColor('#16a34a', this)"></button>
+                            <button type="button" class="swatch" style="background:#0891b2" onclick="setColor('#0891b2', this)"></button>
+                            <button type="button" class="swatch" style="background:#2563eb" onclick="setColor('#2563eb', this)"></button>
+                            <button type="button" class="swatch" style="background:#7c3aed" onclick="setColor('#7c3aed', this)"></button>
+                            <button type="button" class="swatch" style="background:#c026d3" onclick="setColor('#c026d3', this)"></button>
+                            <button type="button" class="swatch" style="background:#db2777" onclick="setColor('#db2777', this)"></button>
+                            <button type="button" class="swatch" style="background:#78350f" onclick="setColor('#78350f', this)"></button>
+                        </div>
+                    </div>
+
+                    <div id="eraserTypeRow" class="hidden card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">ഇറേസർ തരം</label>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" id="eraser_line" onclick="setEraserType('line')" class="tool-btn active">➖ സ്ട്രോക്ക്</button>
+                            <button type="button" id="eraser_area" onclick="setEraserType('area')" class="tool-btn">⬤ ഏരിയ</button>
+                        </div>
+                    </div>
+
+                    <div id="penTypeRow" class="card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">പേനയുടെ തരം</label>
+                        <div class="grid grid-cols-5 gap-1">
+                            <button type="button" id="pen_fountain" onclick="setPenType('fountain')" class="tool-btn">🖋️</button>
+                            <button type="button" id="pen_ballpoint" onclick="setPenType('ballpoint')" class="tool-btn active">🖊️</button>
+                            <button type="button" id="pen_brush" onclick="setPenType('brush')" class="tool-btn">🖌️</button>
+                            <button type="button" id="pen_pencil" onclick="setPenType('pencil')" class="tool-btn">✏️</button>
+                            <button type="button" id="pen_marker" onclick="setPenType('marker')" class="tool-btn">🖍️</button>
+                        </div>
+                    </div>
+
+                    <div id="roadHelpRow" class="hidden card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">🛣️ വഴി വരയ്ക്കൽ</label>
+                        <div class="road-help">കൈവിരൽ / മൗസ് കൊണ്ട് എവിടെ വരച്ചാലും <b>road</b> ആയി മാറും.<br><b>🔗 Snap ✓</b> — പുതിയ വഴിയുടെ അഗ്രം, മുൻപത്തെ വഴിയുടെ അഗ്രത്തിനോ <b>polygon-ന്റെ മൂലയ്ക്കോ / വശത്തിനോ</b> അടുത്തെത്തിയാൽ (55px വരെ) → <b>പച്ച വൃത്തം</b> pulse ചെയ്യും → വിരൽ എടുത്താൽ <b>auto-ചേരും</b>.</div>
+                    </div>
+
+                    <div id="shapeTypeRow" class="hidden card-block">
+                        <label class="block font-semibold text-gray-700 mb-1.5">ഷേപ്പ് തിരഞ്ഞെടുക്കുക</label>
+                        <div class="grid grid-cols-4 gap-1">
+                            <button type="button" id="shape_line" onclick="setShapeType('line')" class="tool-btn active">📏 രേഖ</button>
+                            <button type="button" id="shape_rect" onclick="setShapeType('rect')" class="tool-btn">▭ ചതുരം</button>
+                            <button type="button" id="shape_circle" onclick="setShapeType('circle')" class="tool-btn">⭕ വൃത്തം</button>
+                            <button type="button" id="shape_arrow" onclick="setShapeType('arrow')" class="tool-btn">➡️ അമ്പ്</button>
+                            <button type="button" id="shape_triangle" onclick="setShapeType('triangle')" class="tool-btn">🔺 ത്രികോണം</button>
+                            <button type="button" id="shape_star" onclick="setShapeType('star')" class="tool-btn">⭐ നക്ഷത്രം</button>
+                            <button type="button" id="shape_road" onclick="setShapeType('road')" class="tool-btn">🛣️ നേർവഴി</button>
+                            <button type="button" id="shape_curved_road" onclick="setShapeType('curved_road')" class="tool-btn">↪️ വളഞ്ഞ വഴി</button>
+                            <button type="button" id="shape_s_road" onclick="setShapeType('s_road')" class="tool-btn" style="grid-column: span 2;">🔀 S-വളഞ്ഞ വഴി</button>
+                        </div>
+                    </div>
+
+                    <div class="card-block space-y-1.5">
+                        <label class="block font-semibold text-gray-700 text-[11px]">സെലക്ഷൻ:</label>
+                        <button type="button" onclick="editSelectedText()" class="tool-btn w-full">✏️ തിരഞ്ഞെടുത്ത ടെക്സ്റ്റ് എഡിറ്റ് ചെയ്യുക</button>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" onclick="clearSelection()" class="tool-btn">✖️ ഡീസെലക്ട്</button>
+                            <button type="button" onclick="deleteSelected()" class="tool-btn btn-danger">✂️ ഡിലീറ്റ്</button>
+                            <button type="button" onclick="clearEraserMarks()" class="tool-btn">🧹 ഇറേസർ ക്ലിയർ</button>
+                            <button type="button" onclick="clearUserDrawn()" class="tool-btn btn-danger">🗑️ എല്ലാം മായ്ക്കുക</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button type="button" onclick="rotateSelected(-15)" class="tool-btn">↺ ഇടത്ത് 15°</button>
+                            <button type="button" onclick="rotateSelected(15)" class="tool-btn">↻ വലത്ത് 15°</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="rotateSelected(-90)" class="tool-btn">↺ 90°</button>
+                            <button type="button" onclick="rotateSelected(90)" class="tool-btn">↻ 90°</button>
+                            <button type="button" onclick="resetRotation()" class="tool-btn">⭯ 0°</button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="zoomBy(1.25)" class="tool-btn">🔍+ സൂം</button>
+                            <button type="button" onclick="zoomBy(0.8)" class="tool-btn">🔍− സൂം</button>
+                            <button type="button" onclick="resetZoom()" class="tool-btn">↺ 100%</button>
+                        </div>
+                        <p class="text-[10px] text-gray-500 leading-tight pt-1">
+                            💾 <b>Auto-Save:</b> വരയ്ക്കുന്നത് തനിയെ save ആകും. Browser close ചെയ്ത് തുറന്നാലും <b>തിരികെ കിട്ടും</b>.<br>
+                            ⏱️ <b>Long-press → Select & Move:</b> ഏത് tool-ൽ നിന്നും sketch long-press ചെയ്താൽ select + move ചെയ്യാം.<br>
+                            🔄 <b>തിരികെ പോകാൻ:</b> Select ആയതിന് ശേഷം <b>പുറത്ത് tap</b> ചെയ്യുക.
+                        </p>
+                    </div>
+
+                    <div class="card-block">
+                        <label class="block font-semibold text-gray-700 mb-2">അടയാളങ്ങൾ:</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="addLandmark('well')" class="flex items-center justify-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-300 py-2 px-3 rounded-lg font-medium">🔵 കിണർ</button>
+                            <button type="button" onclick="addLandmark('house')" class="flex items-center justify-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-300 py-2 px-3 rounded-lg font-medium">🏠 വീട്</button>
+                            <button type="button" onclick="addLandmark('tree')" class="flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 py-2 px-3 rounded-lg font-medium">🌳 മരം</button>
+                            <button type="button" onclick="addLandmark('gate')" class="flex items-center justify-center gap-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-300 py-2 px-3 rounded-lg font-medium">🚪 ഗേറ്റ്</button>
+                        </div>
+                    </div>
+
+                    <div class="card-block">
+                        <label class="block font-semibold text-gray-700 mb-2">അതിർത്തി പോയിന്റുകൾ:</label>
+                        <div class="flex gap-2">
+                            <button type="button" onclick="addPlotVertex()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-3 rounded-lg border text-[11px]">➕ കോൺ ചേർക്കുക</button>
+                            <button type="button" onclick="resetPlotVertices()" class="w-1/2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-3 rounded-lg border text-[11px]">↺ റിസെറ്റ്</button>
+                        </div>
+                    </div>
+
+                    <div class="card-block">
+                        <label class="block font-semibold text-gray-700 mb-2">വഴിയുടെ ദിശ (Auto):</label>
+                        <select id="selRoadPos" onchange="changeRoadPosition()" class="w-full border p-2 rounded-lg outline-none bg-white text-[11px]">
+                            <option value="none" selected>വഴി ചേർക്കരുത്</option>
+                            <option value="east">കിഴക്ക് വശത്ത് വഴി</option>
+                            <option value="south">തെക്ക് വശത്ത് വഴി</option>
+                            <option value="west">പടിഞ്ഞാറ് വശത്ത് വഴി</option>
+                            <option value="north">വടക്ക് വശത്ത് വഴി</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-3">
+                <button type="button" onclick="saveDraft()" class="tool-btn btn-save text-sm py-3">
+                    <span>💾</span> Draft Save
+                </button>
+                <button type="button" onclick="openDraftsModal()" class="tool-btn btn-drafts text-sm py-3">
+                    <span>📂</span> Drafts
+                </button>
+                <button type="button" onclick="exportToFile()" class="tool-btn btn-export text-sm py-3">
+                    <span>📤</span> Export
+                </button>
+                <label class="tool-btn btn-import text-sm py-3 cursor-pointer">
+                    <span>📥</span> Import
+                    <input type="file" accept=".json,application/json" onchange="onImportFile(event)" class="hidden">
+                </label>
+                <button type="button" onclick="startFreshSketch()" class="tool-btn btn-fresh text-sm py-3">
+                    <span>🆕</span> New Sketch
+                </button>
+            </div>
+
+            <button type="button" onclick="window.print()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition duration-200 shadow-md flex items-center justify-center gap-2 text-sm mt-3">
+                <span>🖨️</span> PDF ആയി സേവ് ചെയ്യുക / പ്രിന്റ് എടുക്കുക
+            </button>
+        </div>
+    </div>
+
+    <div id="shapeToast" class="shape-toast"><span id="toastContent"></span></div>
+
+    <div id="textEditorOverlay" class="text-editor-overlay">
+        <div class="text-editor-box">
+            <div class="text-editor-title">
+                <span>🅰️ എഴുത്ത്</span>
+                <span class="text-editor-hint">Enter = പുതിയ വരി<br>Ctrl+Enter = ചേർക്കുക</span>
+            </div>
+            <textarea id="textEditorInput" rows="4" placeholder="ഇവിടെ എഴുതുക..."
+                onselectstart="event.stopPropagation(); return true;"
+                oncontextmenu="event.stopPropagation(); return true;"
+                ondragstart="event.stopPropagation(); return true;"></textarea>
+            <div class="text-editor-actions">
+                <button type="button" id="textEditorDelete" class="te-btn te-danger" style="display:none;">🗑️</button>
+                <button type="button" id="textEditorCancel" class="te-btn">റദ്ദാക്കുക</button>
+                <button type="button" id="textEditorOk" class="te-btn te-primary">ചേർക്കുക</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="draftsModalOverlay" class="drafts-modal-overlay">
+        <div class="text-editor-box" style="max-width: 520px;">
+            <div class="text-editor-title">
+                <span>📂 സേവ് ചെയ്ത Drafts</span>
+                <span class="text-editor-hint">Local storage</span>
+            </div>
+            <div id="draftsListContainer" class="space-y-1.5" style="max-height: 400px; overflow-y: auto;"></div>
+            <div class="text-editor-actions">
+                <button type="button" onclick="saveDraft()" class="te-btn te-primary">💾 പുതിയ Draft</button>
+                <button type="button" onclick="closeDraftsModal()" class="te-btn">അടയ്ക്കുക</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SVG_NS = 'http://www.w3.org/2000/svg';
+        const BASE_W = 550, BASE_H = 580;
+        let viewBox = { x: 0, y: 0, w: BASE_W, h: BASE_H };
+
+        let currentMode = 'pen';
+        let currentPenType = 'ballpoint';
+        let currentShapeType = 'line';
+        let currentEraserType = 'line';
+        let drawColor = '#0f172a';
+        let drawSize = 1;
+        let roadSize = 5;
+        let drawOpacity = 1.0;
+
+        let roadSnapEnabled = true;
+        const ROAD_SNAP_RADIUS = 55;
+
+        const PEN_PRESETS = {
+            fountain: { widthMul: 1.20, opacityMul: 1.00, cap: 'round' },
+            ballpoint: { widthMul: 0.85, opacityMul: 1.00, cap: 'round' },
+            brush: { widthMul: 2.50, opacityMul: 0.90, cap: 'round' },
+            pencil: { widthMul: 0.90, opacityMul: 0.60, cap: 'round' },
+            marker: { widthMul: 3.00, opacityMul: 0.90, cap: 'round' }
+        };
+
+        let plotPoints = [];
+        const DEFAULT_PLOT_POINTS = [];
+        let landmarkCounter = 0;
+        let activeElement = null, activeHandleIndex = null;
+        let dragOffset = { x: 0, y: 0 }, dragStartPt = { x: 0, y: 0 };
+        let dragStartTransforms = new Map();
+        let isDrawing = false, drawStartPt = { x: 0, y: 0 };
+        let freehandPoints = [], lassoPoints = [], roadPoints = [];
+        let drawnElementsHistory = [], redoStack = [], drawnElementIdCounter = 0;
+        let selectedElement = null, lassoSelection = [];
+        let resizeState = null, isRotatingSelection = false, selectionRotateState = null;
+        let rotateHandleRefs = { line: null, circle: null, icon: null };
+        let rotateRafPending = false, lastRotateEvent = null;
+        let lastErasePt = null;
+        let shapeRecognitionEnabled = true;
+        let activePointerId = null;
+
+        let batchCounter = 0;
+        let currentBatch = null;
+        let allBatchMarksGroups = [];
+        let pendingErase = false;
+
+        let textEditState = null;
+        let lastTextEditOpen = 0;
+        let lastTap = { id: null, time: 0 };
+        let longPressTimer = null;
+        let longPressStartPt = null;
+        let longPressElement = null;
+        let longPressTriggered = false;
+
+        let longPressMoveState = null;
+
+        let selectionMoveState = null;
+        const SELECTION_PAD = 10;
+        const SELECTION_MIN_SIZE = 54;
+
+        let activePointers = new Map();
+        let pinchState = null;
+        let zoomBadgeTimer = null;
+
+        let transformStartSnapshots = null;
+
+        let eraserStrokeMarks = null;
+        let eraserStrokeRemoved = null;
+
+        let previousToolBeforeLongPress = null;
+
+        let shapeAnchorCache = null;
+
+        /* ⭐⭐⭐ AUTO-SAVE SYSTEM ⭐⭐⭐ */
+        const AUTOSAVE_KEY = 'villageSketch_autosave_v1';
+        let autoSaveTimer = null;
+        let isRestoringFromDraft = false;
+        let autosaveBadgeTimer = null;
+
+        function showAutosaveBadge(text) {
+            const badge = document.getElementById('autosaveBadge');
+            if (!badge) return;
+            badge.textContent = text || '💾 Auto-saved';
+            badge.classList.add('show');
+            clearTimeout(autosaveBadgeTimer);
+            autosaveBadgeTimer = setTimeout(() => badge.classList.remove('show'), 1200);
+        }
+
+        /* ============================================================
+           ROAD SNAP HELPERS
+           ============================================================ */
+        function toggleRoadSnap() {
+            roadSnapEnabled = !roadSnapEnabled;
+            const btn = document.getElementById('btnRoadSnap');
+            if (btn) {
+                btn.classList.toggle('active', roadSnapEnabled);
+                btn.textContent = roadSnapEnabled ? '🔗 Snap ✓' : '🔗 Snap';
+            }
+            showToast(roadSnapEnabled ? '🔗 വഴി Snap ON ✓' : '🔗 വഴി Snap OFF');
+            scheduleAutoSave();
+        }
+
+        function isRoadShapeType(type) {
+            return type === 'road' || type === 'curved_road' || type === 's_road';
+        }
+
+        function localToSvgUserCoords(g, localPt) {
+            const svg = document.getElementById('sketchSvg');
+            if (!g.getScreenCTM || !svg.getScreenCTM()) return null;
+            const pt = svg.createSVGPoint();
+            pt.x = localPt.x; pt.y = localPt.y;
+            const screenPt = pt.matrixTransform(g.getScreenCTM());
+            const worldPt = screenPt.matrixTransform(svg.getScreenCTM().inverse());
+            return { x: worldPt.x, y: worldPt.y };
+        }
+
+        function getAllRoadEndpoints() {
+            const endpoints = [];
+            document.querySelectorAll('#userDrawnLayer .drawn-item').forEach(g => {
+                const sx = g.getAttribute('data-road-start-x');
+                const sy = g.getAttribute('data-road-start-y');
+                const ex = g.getAttribute('data-road-end-x');
+                const ey = g.getAttribute('data-road-end-y');
+                if (sx === null || sy === null || ex === null || ey === null) return;
+
+                const w1 = localToSvgUserCoords(g, { x: parseFloat(sx), y: parseFloat(sy) });
+                const w2 = localToSvgUserCoords(g, { x: parseFloat(ex), y: parseFloat(ey) });
+                if (w1) endpoints.push({ x: w1.x, y: w1.y, group: g, end: 'start' });
+                if (w2) endpoints.push({ x: w2.x, y: w2.y, group: g, end: 'end' });
+            });
+            return endpoints;
+        }
+
+        function getShapeAnchorsAndEdges() {
+            if (shapeAnchorCache) return shapeAnchorCache;
+
+            const anchors = [];
+            const edges = [];
+
+            document.querySelectorAll('#userDrawnLayer .drawn-item').forEach(g => {
+                g.querySelectorAll('polygon, rect, line, circle, ellipse').forEach(shape => {
+                    const stroke = shape.getAttribute('stroke');
+                    if (stroke === 'transparent' || stroke === 'none') return;
+                    const fill = shape.getAttribute('fill');
+                    if (fill === 'transparent') return;
+
+                    const tag = shape.tagName.toLowerCase();
+                    const localPts = [];
+
+                    if (tag === 'polygon') {
+                        const pts = shape.getAttribute('points') || '';
+                        const nums = pts.match(/-?[\d.]+/g);
+                        if (!nums) return;
+                        for (let i = 0; i + 1 < nums.length; i += 2) {
+                            localPts.push({ x: parseFloat(nums[i]), y: parseFloat(nums[i + 1]) });
+                        }
+                    } else if (tag === 'rect') {
+                        const x = parseFloat(shape.getAttribute('x'));
+                        const y = parseFloat(shape.getAttribute('y'));
+                        const w = parseFloat(shape.getAttribute('width'));
+                        const h = parseFloat(shape.getAttribute('height'));
+                        if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h)) return;
+                        localPts.push({ x: x, y: y }, { x: x + w, y: y }, { x: x + w, y: y + h }, { x: x, y: y + h });
+                    } else if (tag === 'line') {
+                        const x1 = parseFloat(shape.getAttribute('x1'));
+                        const y1 = parseFloat(shape.getAttribute('y1'));
+                        const x2 = parseFloat(shape.getAttribute('x2'));
+                        const y2 = parseFloat(shape.getAttribute('y2'));
+                        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) return;
+                        localPts.push({ x: x1, y: y1 }, { x: x2, y: y2 });
+                    } else if (tag === 'circle') {
+                        const cx = parseFloat(shape.getAttribute('cx'));
+                        const cy = parseFloat(shape.getAttribute('cy'));
+                        const r = parseFloat(shape.getAttribute('r'));
+                        if (isNaN(cx) || isNaN(cy) || isNaN(r) || r <= 0) return;
+                        const N = 16;
+                        for (let i = 0; i < N; i++) {
+                            const a = i * Math.PI * 2 / N;
+                            localPts.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+                        }
+                    } else if (tag === 'ellipse') {
+                        const cx = parseFloat(shape.getAttribute('cx'));
+                        const cy = parseFloat(shape.getAttribute('cy'));
+                        const rx = parseFloat(shape.getAttribute('rx'));
+                        const ry = parseFloat(shape.getAttribute('ry'));
+                        if (isNaN(cx) || isNaN(cy) || isNaN(rx) || isNaN(ry) || rx <= 0 || ry <= 0) return;
+                        const N = 16;
+                        for (let i = 0; i < N; i++) {
+                            const a = i * Math.PI * 2 / N;
+                            localPts.push({ x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) });
+                        }
+                    }
+
+                    if (localPts.length === 0) return;
+
+                    const worldPts = [];
+                    localPts.forEach(p => {
+                        const wp = localToSvgUserCoords(g, p);
+                        if (wp) worldPts.push(wp);
+                    });
+
+                    if (worldPts.length === 0) return;
+
+                    worldPts.forEach(wp => {
+                        anchors.push({ x: wp.x, y: wp.y, group: g, shape: shape });
+                    });
+
+                    for (let i = 0; i < worldPts.length; i++) {
+                        const a = worldPts[i];
+                        const b = worldPts[(i + 1) % worldPts.length];
+                        edges.push({ a: a, b: b, group: g });
+                    }
+                });
+            });
+
+            shapeAnchorCache = { anchors, edges };
+            return shapeAnchorCache;
+        }
+
+        function invalidateShapeAnchorCache() {
+            shapeAnchorCache = null;
+        }
+
+        function closestPointOnSegment(pt, a, b) {
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq === 0) return { x: a.x, y: a.y };
+            let t = ((pt.x - a.x) * dx + (pt.y - a.y) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+            return { x: a.x + t * dx, y: a.y + t * dy };
+        }
+
+        function findSnapPoint(pt) {
+            if (!roadSnapEnabled) return null;
+            let best = null, bestDist = ROAD_SNAP_RADIUS;
+
+            const roadEndpoints = getAllRoadEndpoints();
+            roadEndpoints.forEach(ep => {
+                const d = Math.hypot(ep.x - pt.x, ep.y - pt.y);
+                if (d < bestDist) { bestDist = d; best = ep; }
+            });
+
+            const { anchors, edges } = getShapeAnchorsAndEdges();
+
+            anchors.forEach(a => {
+                const d = Math.hypot(a.x - pt.x, a.y - pt.y);
+                if (d < bestDist) { bestDist = d; best = a; }
+            });
+
+            edges.forEach(e => {
+                const cp = closestPointOnSegment(pt, e.a, e.b);
+                const d = Math.hypot(cp.x - pt.x, cp.y - pt.y);
+                if (d < bestDist) { bestDist = d; best = { x: cp.x, y: cp.y }; }
+            });
+
+            return best ? { x: best.x, y: best.y } : null;
+        }
+
+        function drawSnapIndicator(layer, snapPt, sourcePt, showConnLine) {
+            if (!snapPt) return;
+            if (showConnLine && sourcePt) {
+                const connLine = document.createElementNS(SVG_NS, 'line');
+                connLine.setAttribute('x1', sourcePt.x.toFixed(2));
+                connLine.setAttribute('y1', sourcePt.y.toFixed(2));
+                connLine.setAttribute('x2', snapPt.x.toFixed(2));
+                connLine.setAttribute('y2', snapPt.y.toFixed(2));
+                connLine.setAttribute('stroke', '#10b981');
+                connLine.setAttribute('stroke-width', '3');
+                connLine.setAttribute('stroke-dasharray', '8,5');
+                connLine.setAttribute('pointer-events', 'none');
+                layer.appendChild(connLine);
+            }
+            const outer = document.createElementNS(SVG_NS, 'circle');
+            outer.setAttribute('cx', snapPt.x.toFixed(2));
+            outer.setAttribute('cy', snapPt.y.toFixed(2));
+            outer.setAttribute('r', '18');
+            outer.setAttribute('fill', 'rgba(16, 185, 129, 0.25)');
+            outer.setAttribute('stroke', '#10b981');
+            outer.setAttribute('stroke-width', '3');
+            outer.setAttribute('pointer-events', 'none');
+            outer.setAttribute('class', 'snap-pulse');
+            layer.appendChild(outer);
+
+            const inner = document.createElementNS(SVG_NS, 'circle');
+            inner.setAttribute('cx', snapPt.x.toFixed(2));
+            inner.setAttribute('cy', snapPt.y.toFixed(2));
+            inner.setAttribute('r', '6');
+            inner.setAttribute('fill', '#10b981');
+            inner.setAttribute('pointer-events', 'none');
+            layer.appendChild(inner);
+        }
+
+        /* ============================================================
+           DRAFT SYSTEM
+           ============================================================ */
+        const DRAFT_KEY_PREFIX = 'villageSketch_draft_';
+        const DRAFTS_INDEX_KEY = 'villageSketch_draftsIndex_v1';
+
+        function valById(id) {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
+        }
+
+        function getDraftsIndex() {
+            try {
+                const raw = localStorage.getItem(DRAFTS_INDEX_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch (e) { return []; }
+        }
+        function setDraftsIndex(idx) {
+            try { localStorage.setItem(DRAFTS_INDEX_KEY, JSON.stringify(idx)); } catch (e) {}
+        }
+
+        function serializeSketch(name) {
+            return {
+                version: 1,
+                name: name || 'Untitled',
+                savedAt: Date.now(),
+                svg: {
+                    userDrawnLayerHTML: document.getElementById('userDrawnLayer').innerHTML,
+                    landmarksLayerHTML: document.getElementById('landmarksLayer').innerHTML,
+                    svgDefsHTML: document.getElementById('svgDefs').innerHTML,
+                    viewBox: { x: viewBox.x, y: viewBox.y, w: viewBox.w, h: viewBox.h }
+                },
+                counters: {
+                    drawnElementIdCounter: drawnElementIdCounter,
+                    landmarkCounter: landmarkCounter,
+                    batchCounter: batchCounter
+                },
+                forms: {
+                    inVillage: valById('inVillage'),
+                    inNumber: valById('inNumber'),
+                    inBlock: valById('inBlock'),
+                    inThandaper: valById('inThandaper'),
+                    inApplicantName: valById('inApplicantName'),
+                    inSurvey: valById('inSurvey'),
+                    inExtent: valById('inExtent'),
+                    inInstitutionName: valById('inInstitutionName'),
+                    inDate: valById('inDate'),
+                    inVillageOfficer: valById('inVillageOfficer'),
+                    inNorth: valById('inNorth'),
+                    inSouth: valById('inSouth'),
+                    inEast: valById('inEast'),
+                    inWest: valById('inWest'),
+                    inRoad: valById('inRoad')
+                },
+                settings: {
+                    currentMode: currentMode,
+                    currentPenType: currentPenType,
+                    currentShapeType: currentShapeType,
+                    currentEraserType: currentEraserType,
+                    drawColor: drawColor,
+                    drawSize: drawSize,
+                    roadSize: roadSize,
+                    drawOpacity: drawOpacity,
+                    roadSnapEnabled: roadSnapEnabled
+                }
+            };
+        }
+
+        function deserializeSketch(data) {
+            if (!data || !data.svg) return false;
+            isRestoringFromDraft = true;
+
+            try {
+                const f = data.forms || {};
+                Object.keys(f).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = f[id];
+                });
+
+                document.getElementById('userDrawnLayer').innerHTML = data.svg.userDrawnLayerHTML || '';
+                document.getElementById('landmarksLayer').innerHTML = data.svg.landmarksLayerHTML || '';
+                document.getElementById('svgDefs').innerHTML = data.svg.svgDefsHTML || '';
+
+                const c = data.counters || {};
+                drawnElementIdCounter = c.drawnElementIdCounter || 0;
+                landmarkCounter = c.landmarkCounter || 0;
+                batchCounter = c.batchCounter || 0;
+
+                allBatchMarksGroups = [];
+                document.querySelectorAll('#svgDefs > mask').forEach(m => {
+                    const g = m.querySelector(':scope > g');
+                    if (g) allBatchMarksGroups.push(g);
+                });
+                currentBatch = null;
+                pendingErase = false;
+
+                drawnElementsHistory = [];
+                redoStack = [];
+                lassoSelection = [];
+                selectedElement = null;
+                previousToolBeforeLongPress = null;
+                longPressMoveState = null;
+                invalidateShapeAnchorCache();
+
+                document.querySelectorAll('#userDrawnLayer .draggable-element, #landmarksLayer .draggable-element').forEach(el => {
+                    setupDraggable(el);
+                    if (el.classList && el.classList.contains('text-item')) {
+                        el.addEventListener('dblclick', function (ev) {
+                            ev.preventDefault(); ev.stopPropagation();
+                            openTextEditor({ elementId: el.id, initialText: getStoredText(el) });
+                        });
+                        try { refreshTextHitArea(el); } catch (e) {}
+                    }
+                });
+
+                if (data.svg.viewBox && data.svg.viewBox.w) {
+                    viewBox = {
+                        x: data.svg.viewBox.x,
+                        y: data.svg.viewBox.y,
+                        w: data.svg.viewBox.w,
+                        h: data.svg.viewBox.h
+                    };
+                    applyViewBox();
+                } else {
+                    resetZoom();
+                }
+
+                const s = data.settings || {};
+                if (s.currentPenType) currentPenType = s.currentPenType;
+                if (s.currentShapeType) currentShapeType = s.currentShapeType;
+                if (s.currentEraserType) currentEraserType = s.currentEraserType;
+                if (s.drawColor) { drawColor = s.drawColor; }
+                if (typeof s.drawSize === 'number') drawSize = s.drawSize;
+                if (typeof s.roadSize === 'number') roadSize = s.roadSize;
+                if (typeof s.drawOpacity === 'number') drawOpacity = s.drawOpacity;
+                if (typeof s.roadSnapEnabled === 'boolean') roadSnapEnabled = s.roadSnapEnabled;
+
+                const snapBtn = document.getElementById('btnRoadSnap');
+                if (snapBtn) {
+                    snapBtn.classList.toggle('active', roadSnapEnabled);
+                    snapBtn.textContent = roadSnapEnabled ? '🔗 Snap ✓' : '🔗 Snap';
+                }
+
+                updateSketch();
+                updateUndoButtons();
+                renderSelectionOverlay();
+
+                return true;
+            } catch (err) {
+                console.error('Deserialize failed:', err);
+                return false;
+            } finally {
+                setTimeout(() => { isRestoringFromDraft = false; }, 100);
+            }
+        }
+
+        /* ⭐⭐⭐ AUTO-SAVE FUNCTIONS ⭐⭐⭐ */
+        function scheduleAutoSave() {
+            if (isRestoringFromDraft) return;
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(performAutoSave, 800);
+        }
+
+        function performAutoSave() {
+            autoSaveTimer = null;
+            try {
+                const data = serializeSketch('Autosave');
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+                showAutosaveBadge('💾 Auto-saved');
+            } catch (e) {
+                console.warn('Auto-save failed:', e);
+                showAutosaveBadge('⚠️ Save failed');
+            }
+        }
+
+        function tryRestoreAutosave() {
+            try {
+                const raw = localStorage.getItem(AUTOSAVE_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (!data || !data.svg) return false;
+
+                const userHTML = data.svg.userDrawnLayerHTML || '';
+                const lmHTML = data.svg.landmarksLayerHTML || '';
+                const hasContent = (userHTML.indexOf('<') !== -1) || (lmHTML.indexOf('<') !== -1);
+
+                if (hasContent && deserializeSketch(data)) {
+                    showToast('🔄 മുൻപ് വരച്ചത് തിരികെ കിട്ടി ✓');
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Auto-restore failed:', e);
+            }
+            return false;
+        }
+
+        function clearAutosave() {
+            try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) {}
+        }
+
+        function startFreshSketch() {
+            if (!confirm('നിലവിലുള്ള sketch മായ്ച്ച് പുതിയത് തുടങ്ങണോ?')) return;
+            clearAutosave();
+            clearUserDrawn();
+
+            /* Reset form fields to defaults */
+            const defaults = {
+                inVillage: 'പൂവരണി വില്ലേജ്, താലൂക്ക്: മീനച്ചിൽ',
+                inNumber: '1', inBlock: '34', inThandaper: '5678',
+                inApplicantName: '', inSurvey: '210/1, 210/2',
+                inExtent: '02.50 ആർസ്, 01.75 ആർസ്',
+                inInstitutionName: '', inDate: '', inVillageOfficer: '',
+                inNorth: 'Sy. No. 210/4', inSouth: 'Sy. No. 210/5',
+                inEast: 'Sy. No. 211/1', inWest: 'Sy. No. 210/8',
+                inRoad: '3 മീറ്റർ വീതിയുള്ള പഞ്ചായത്ത് വഴി'
+            };
+            Object.keys(defaults).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = defaults[id];
+            });
+            document.getElementById('selRoadPos').value = 'none';
+            changeRoadPosition();
+            updateSketch();
+            resetZoom();
+            setMode('pen');
+            showToast('🆕 പുതിയ sketch തുടങ്ങി');
+        }
+
+        /* ⭐ Save Draft (named) */
+        function saveDraft() {
+            let defaultName = 'Draft ' + new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const name = prompt('Draft name:', defaultName);
+            if (!name || !name.trim()) return;
+            const data = serializeSketch(name.trim());
+            const id = 'draft_' + Date.now();
+            try {
+                localStorage.setItem(DRAFT_KEY_PREFIX + id, JSON.stringify(data));
+            } catch (e) {
+                showToast('⚠️ Storage full');
+                return;
+            }
+            const idx = getDraftsIndex();
+            idx.push({ id: id, name: data.name, savedAt: data.savedAt });
+            setDraftsIndex(idx);
+            showToast('💾 Draft save ചെയ്തു ✓');
+        }
+
+        function loadDraft(id) {
+            const raw = localStorage.getItem(DRAFT_KEY_PREFIX + id);
+            if (!raw) { showToast('⚠️ Draft കണ്ടെത്തിയില്ല'); return; }
+            try {
+                const data = JSON.parse(raw);
+                if (deserializeSketch(data)) {
+                    showToast('📂 Draft ലോഡ് ചെയ്തു ✓');
+                    closeDraftsModal();
+                    scheduleAutoSave();
+                } else {
+                    showToast('⚠️ Load പരാജയം');
+                }
+            } catch (e) {
+                showToast('⚠️ Load പരാജയം');
+            }
+        }
+
+        function deleteDraft(id) {
+            if (!confirm('ഈ draft ഡിലീറ്റ് ചെയ്യണോ?')) return;
+            try { localStorage.removeItem(DRAFT_KEY_PREFIX + id); } catch (e) {}
+            const idx = getDraftsIndex().filter(d => d.id !== id);
+            setDraftsIndex(idx);
+            renderDraftsList();
+            showToast('🗑️ Draft ഡിലീറ്റ് ചെയ്തു');
+        }
+
+        function renderDraftsList() {
+            const idx = getDraftsIndex().sort((a, b) => b.savedAt - a.savedAt);
+            const container = document.getElementById('draftsListContainer');
+            if (!container) return;
+            if (idx.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 text-xs py-6">സേവ് ചെയ്ത drafts ഒന്നും ഇല്ല</p>';
+                return;
+            }
+            container.innerHTML = idx.map(d => {
+                const dt = new Date(d.savedAt);
+                const meta = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                return '<div class="draft-item">' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="draft-name">' + escapeHtml(d.name) + '</div>' +
+                        '<div class="draft-meta">' + meta + '</div>' +
+                    '</div>' +
+                    '<div class="draft-actions">' +
+                        '<button type="button" onclick="loadDraft(\'' + d.id + '\')" class="tool-btn tool-btn-sm" style="background:#dbeafe;color:#1e40af;border-color:#93c5fd;">📂 ലോഡ്</button>' +
+                        '<button type="button" onclick="deleteDraft(\'' + d.id + '\')" class="tool-btn tool-btn-sm btn-danger">🗑️</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function openDraftsModal() {
+            renderDraftsList();
+            document.getElementById('draftsModalOverlay').classList.add('show');
+        }
+        function closeDraftsModal() {
+            document.getElementById('draftsModalOverlay').classList.remove('show');
+        }
+
+        function exportToFile() {
+            const data = serializeSketch('Exported');
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeName = 'village_sketch_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.json';
+            a.download = safeName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            showToast('📤 ഫയൽ download ചെയ്തു');
+        }
+
+        function onImportFile(ev) {
+            const file = ev.target.files && ev.target.files[0];
+            if (file) importFromFile(file);
+            ev.target.value = '';
+        }
+
+        function importFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (deserializeSketch(data)) {
+                        showToast('📥 ഫയൽ import ചെയ്തു ✓');
+                        scheduleAutoSave();
+                    } else {
+                        showToast('⚠️ ഫയൽ format ശരിയല്ല');
+                    }
+                } catch (err) {
+                    showToast('⚠️ ഫയൽ വായിക്കാൻ പറ്റിയില്ല');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[ch]));
+        }
+
+        /* ============================================================
+           END DRAFT / AUTOSAVE SYSTEM
+           ============================================================ */
+
+        function modeName(mode) {
+            const names = {
+                pen: 'പേന', highlighter: 'ഹൈലൈറ്റർ', eraser: 'ഇറേസർ',
+                lasso: 'ലാസോ', shape: 'ഷേപ്പ്', text: 'എഴുത്ത്', road: 'വഴി', select: 'സെലക്ട്'
+            };
+            return names[mode] || mode;
+        }
+
+        function snapshotTransforms(elements) {
+            const map = new Map();
+            elements.forEach(el => map.set(el, el.getAttribute('transform') || ''));
+            return map;
+        }
+
+        function pushTransformHistory(beforeMap) {
+            if (!beforeMap || beforeMap.size === 0) return;
+            const changes = [];
+            beforeMap.forEach((beforeTr, el) => {
+                const afterTr = el.getAttribute('transform') || '';
+                if (beforeTr !== afterTr) changes.push({ el, before: beforeTr, after: afterTr });
+            });
+            if (changes.length === 0) return;
+            drawnElementsHistory.push({ type: 'transform', changes });
+            redoStack = [];
+            updateUndoButtons();
+            invalidateShapeAnchorCache();
+            scheduleAutoSave();
+        }
+
+        function createBatch() {
+            batchCounter++;
+            const maskId = 'eraserMask_' + batchCounter;
+            const mask = document.createElementNS(SVG_NS, 'mask');
+            mask.setAttribute('id', maskId);
+            mask.setAttribute('maskUnits', 'userSpaceOnUse');
+            mask.setAttribute('x', '0'); mask.setAttribute('y', '0');
+            mask.setAttribute('width', BASE_W); mask.setAttribute('height', BASE_H);
+            const bg = document.createElementNS(SVG_NS, 'rect');
+            bg.setAttribute('x', '0'); bg.setAttribute('y', '0');
+            bg.setAttribute('width', BASE_W); bg.setAttribute('height', BASE_H);
+            bg.setAttribute('fill', 'white');
+            mask.appendChild(bg);
+            const marksGroup = document.createElementNS(SVG_NS, 'g');
+            mask.appendChild(marksGroup);
+            document.getElementById('svgDefs').appendChild(mask);
+            const contentGroup = document.createElementNS(SVG_NS, 'g');
+            contentGroup.setAttribute('mask', `url(#${maskId})`);
+            document.getElementById('userDrawnLayer').appendChild(contentGroup);
+            const batch = { maskId, contentGroup, marksGroup };
+            allBatchMarksGroups.push(marksGroup);
+            return batch;
+        }
+
+        function ensureCurrentBatch() {
+            if (!currentBatch) currentBatch = createBatch();
+            return currentBatch;
+        }
+
+        function prepareForNewDraw() {
+            if (pendingErase) { currentBatch = null; pendingErase = false; }
+            return ensureCurrentBatch();
+        }
+
+        function addEraserMarkToAllBatches(createMarkFn) {
+            if (allBatchMarksGroups.length === 0) ensureCurrentBatch();
+            allBatchMarksGroups.forEach(mg => {
+                const mark = createMarkFn();
+                mg.appendChild(mark);
+                if (eraserStrokeMarks) eraserStrokeMarks.push({ parent: mg, node: mark });
+            });
+            pendingErase = true;
+        }
+
+        function finalizeEraserStroke() {
+            let pushed = false;
+            if (eraserStrokeRemoved && eraserStrokeRemoved.length > 0) {
+                drawnElementsHistory.push({ type: 'erase-elements', items: eraserStrokeRemoved.slice() });
+                pushed = true;
+            }
+            if (eraserStrokeMarks && eraserStrokeMarks.length > 0) {
+                drawnElementsHistory.push({ type: 'erase-marks', marks: eraserStrokeMarks.slice() });
+                pushed = true;
+            }
+            if (pushed) {
+                redoStack = [];
+                updateUndoButtons();
+                invalidateShapeAnchorCache();
+                scheduleAutoSave();
+            }
+            eraserStrokeMarks = null;
+            eraserStrokeRemoved = null;
+        }
+
+        function eraseRemoveElement(el) {
+            if (!el || !el.parentNode) return null;
+            const id = el.id;
+            const parent = el.parentNode;
+            const nextSibling = el.nextSibling;
+            if (selectedElement === el) selectedElement = null;
+            lassoSelection = lassoSelection.filter(x => x !== el);
+            el.remove();
+            invalidateShapeAnchorCache();
+            return { id, node: el, parent, nextSibling };
+        }
+
+        function getClientPoint(e) {
+            if (e.clientX !== undefined && e.clientY !== undefined) return { x: e.clientX, y: e.clientY };
+            if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            if (e.changedTouches && e.changedTouches.length) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            return { x: 0, y: 0 };
+        }
+
+        function getSvgCoordinates(e) {
+            const svg = document.getElementById('sketchSvg');
+            const c = getClientPoint(e);
+            const ctm = svg.getScreenCTM();
+            if (!ctm) return { x: 0, y: 0 };
+            const pt = svg.createSVGPoint();
+            pt.x = c.x; pt.y = c.y;
+            const p = pt.matrixTransform(ctm.inverse());
+            return { x: p.x, y: p.y };
+        }
+
+        function getPointerDistance(a, b) { return Math.hypot(b.x - a.x, b.y - a.y); }
+        function getPointerMidpoint(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+        function clientToSvgFraction(clientPt) {
+            const svg = document.getElementById('sketchSvg');
+            const rect = svg.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return { fx: 0.5, fy: 0.5 };
+            return {
+                fx: (clientPt.x - rect.left) / rect.width,
+                fy: (clientPt.y - rect.top) / rect.height
+            };
+        }
+
+        function showZoomBadge() {
+            const badge = document.getElementById('zoomBadge');
+            if (!badge) return;
+            const pct = Math.round((BASE_W / viewBox.w) * 100);
+            badge.textContent = pct + '%';
+            badge.classList.add('show');
+            clearTimeout(zoomBadgeTimer);
+            zoomBadgeTimer = setTimeout(() => badge.classList.remove('show'), 900);
+        }
+
+        function cancelActiveDrawing() {
+            isDrawing = false;
+            activePointerId = null;
+            const t = document.getElementById('tempDrawLayer');
+            if (t) t.innerHTML = '';
+            freehandPoints = []; lassoPoints = []; roadPoints = [];
+        }
+
+        function startPinch() {
+            if (activePointers.size < 2) return;
+            cancelActiveDrawing();
+
+            if (longPressMoveState) {
+                if (transformStartSnapshots) {
+                    pushTransformHistory(transformStartSnapshots);
+                    transformStartSnapshots = null;
+                }
+                longPressMoveState = null;
+            }
+
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; longPressTriggered = false; }
+            activeElement = null;
+            const ptrs = Array.from(activePointers.values());
+            const startDist = getPointerDistance(ptrs[0], ptrs[1]);
+            if (startDist < 5) return;
+            const startMid = getPointerMidpoint(ptrs[0], ptrs[1]);
+            const frac = clientToSvgFraction(startMid);
+            pinchState = {
+                startDist,
+                startViewBox: { x: viewBox.x, y: viewBox.y, w: viewBox.w, h: viewBox.h },
+                fixedSvgX: viewBox.x + frac.fx * viewBox.w,
+                fixedSvgY: viewBox.y + frac.fy * viewBox.h
+            };
+            showZoomBadge();
+        }
+
+        function updatePinch() {
+            if (!pinchState || activePointers.size < 2) return false;
+            const ptrs = Array.from(activePointers.values()).slice(0, 2);
+            const curDist = getPointerDistance(ptrs[0], ptrs[1]);
+            const curMid = getPointerMidpoint(ptrs[0], ptrs[1]);
+            if (curDist < 1 || pinchState.startDist < 1) return false;
+
+            const svb = pinchState.startViewBox;
+            const ratio = pinchState.startDist / curDist;
+
+            let newW = svb.w * ratio;
+            let newH = svb.h * ratio;
+
+            const minW = BASE_W * 0.20, maxW = BASE_W * 3.0;
+            if (newW < minW) { newW = minW; newH = svb.h * (minW / svb.w); }
+            if (newW > maxW) { newW = maxW; newH = svb.h * (maxW / svb.w); }
+
+            const frac = clientToSvgFraction(curMid);
+            let newX = pinchState.fixedSvgX - frac.fx * newW;
+            let newY = pinchState.fixedSvgY - frac.fy * newH;
+
+            viewBox = { x: newX, y: newY, w: newW, h: newH };
+            applyViewBox();
+            showZoomBadge();
+            return true;
+        }
+
+        function endPinch() {
+            pinchState = null;
+        }
+
+        function cleanRoadPoints(points) {
+            if (points.length < 2) return points.slice();
+            const unique = [points[0]];
+            for (let i = 1; i < points.length; i++) {
+                const prev = unique[unique.length - 1];
+                if (Math.hypot(points[i].x - prev.x, points[i].y - prev.y) > 4) unique.push(points[i]);
+            }
+            while (unique.length > 3) {
+                const n = unique.length;
+                const p1 = unique[n - 1], p2 = unique[n - 2], p3 = unique[n - 3];
+                const v1x = p1.x - p2.x, v1y = p1.y - p2.y;
+                const v2x = p2.x - p3.x, v2y = p2.y - p3.y;
+                const dot = v1x * v2x + v1y * v2y;
+                if (dot < -0.5 * Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y)) unique.pop();
+                else break;
+            }
+            while (unique.length > 3) {
+                const p1 = unique[0], p2 = unique[1], p3 = unique[2];
+                const v1x = p1.x - p2.x, v1y = p1.y - p2.y;
+                const v2x = p2.x - p3.x, v2y = p2.y - p3.y;
+                const dot = v1x * v2x + v1y * v2y;
+                if (dot < -0.5 * Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y)) unique.shift();
+                else break;
+            }
+            return unique;
+        }
+
+        function catmullRomPath(points) {
+            if (points.length < 2) return '';
+            if (points.length === 2) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} L ${points[1].x.toFixed(1)} ${points[1].y.toFixed(1)}`;
+            let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+            const n = points.length;
+            for (let i = 0; i < n - 1; i++) {
+                const p0 = i === 0 ? points[0] : points[i - 1];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = i + 2 < n ? points[i + 2] : points[n - 1];
+                const cp1x = p1.x + (p2.x - p0.x) / 6, cp1y = p1.y + (p2.y - p0.y) / 6;
+                const cp2x = p2.x - (p3.x - p1.x) / 6, cp2y = p2.y - (p3.y - p1.y) / 6;
+                d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)} ${cp2x.toFixed(1)} ${cp2y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+            }
+            return d;
+        }
+
+        function buildRoadPath(rawPoints) {
+            const cleaned = cleanRoadPoints(rawPoints);
+            if (cleaned.length < 2) return null;
+            return catmullRomPath(cleaned);
+        }
+
+        function simplifyRDP(points, epsilon) {
+            if (points.length < 3) return points;
+            let maxDist = 0, index = 0;
+            const first = points[0], last = points[points.length - 1];
+            for (let i = 1; i < points.length - 1; i++) {
+                const d = perpDist(points[i], first, last);
+                if (d > maxDist) { maxDist = d; index = i; }
+            }
+            if (maxDist > epsilon) {
+                const left = simplifyRDP(points.slice(0, index + 1), epsilon);
+                const right = simplifyRDP(points.slice(index), epsilon);
+                return left.slice(0, -1).concat(right);
+            }
+            return [first, last];
+        }
+
+        function perpDist(pt, a, b) {
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const mag = Math.hypot(dx, dy);
+            if (mag === 0) return Math.hypot(pt.x - a.x, pt.y - a.y);
+            return Math.abs(dy * pt.x - dx * pt.y + b.x * a.y - b.y * a.x) / mag;
+        }
+
+        function computeBBox(points) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const p of points) {
+                if (p.x < minX) minX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y > maxY) maxY = p.y;
+            }
+            return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY };
+        }
+
+        function computeCornerAngle(prev, curr, next) {
+            const v1x = prev.x - curr.x, v1y = prev.y - curr.y;
+            const v2x = next.x - curr.x, v2y = next.y - curr.y;
+            const m1 = Math.hypot(v1x, v1y), m2 = Math.hypot(v2x, v2y);
+            if (m1 === 0 || m2 === 0) return 180;
+            let cosA = (v1x * v2x + v1y * v2y) / (m1 * m2);
+            cosA = Math.max(-1, Math.min(1, cosA));
+            return Math.acos(cosA) * 180 / Math.PI;
+        }
+
+        function cleanPolygon(points, size) {
+            if (points.length < 3) return points;
+            let pts = points.slice();
+            const flatAngleThreshold = 155, minEdgeRatio = 0.18, minAbsoluteEdge = 6;
+            for (let iter = 0; iter < 60; iter++) {
+                const n = pts.length;
+                if (n <= 3) break;
+                const edges = [];
+                for (let i = 0; i < n; i++) {
+                    const a = pts[i], b = pts[(i + 1) % n];
+                    edges.push(Math.hypot(b.x - a.x, b.y - a.y));
+                }
+                const maxEdge = Math.max(...edges);
+                const minEdgeAllowed = Math.max(maxEdge * minEdgeRatio, minAbsoluteEdge);
+                let removeIdx = -1, bestScore = 0;
+                for (let i = 0; i < n; i++) {
+                    const prev = pts[(i - 1 + n) % n], curr = pts[i], next = pts[(i + 1) % n];
+                    const eIn = edges[(i - 1 + n) % n], eOut = edges[i];
+                    if (eIn < 0.1 || eOut < 0.1) { removeIdx = i; bestScore = 100; break; }
+                    const angle = computeCornerAngle(prev, curr, next);
+                    let score = 0;
+                    if (angle > flatAngleThreshold) score += 1.0 + (angle - flatAngleThreshold) / (180 - flatAngleThreshold);
+                    const edgeRatio = Math.min(eIn, eOut) / maxEdge;
+                    if (eIn < minEdgeAllowed || eOut < minEdgeAllowed) score += 1.3;
+                    else if (edgeRatio < 0.30) score += 0.6;
+                    if (score > bestScore) { bestScore = score; removeIdx = i; }
+                }
+                if (removeIdx >= 0 && bestScore >= 0.9) pts.splice(removeIdx, 1);
+                else break;
+            }
+            return pts;
+        }
+
+        function simplifyAndClose(points, eps, size) {
+            let s = simplifyRDP(points, eps);
+            if (s.length > 1) {
+                const f = s[0], l = s[s.length - 1];
+                if (Math.hypot(l.x - f.x, l.y - f.y) < size * 0.20) s = s.slice(0, -1);
+            }
+            return s;
+        }
+
+        function detectPolygon(points, isClosed, size) {
+            if (!isClosed) return null;
+            const epsRatios = [0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.06, 0.07, 0.085, 0.10, 0.12];
+            const results = [], counts = [];
+            for (const r of epsRatios) {
+                let s = simplifyAndClose(points, size * r, size);
+                s = cleanPolygon(s, size);
+                results.push(s);
+                counts.push(s.length);
+            }
+            let bestStart = -1, bestLen = 0;
+            for (let i = 0; i < counts.length; i++) {
+                let j = i;
+                while (j + 1 < counts.length && counts[j + 1] === counts[i]) j++;
+                const len = j - i + 1, c = counts[i];
+                if (c >= 3 && c <= 15 && len > bestLen) { bestLen = len; bestStart = i; }
+                i = j;
+            }
+            if (bestStart < 0) {
+                for (let i = 0; i < counts.length; i++) if (counts[i] >= 3 && counts[i] <= 15) return results[i];
+                return null;
+            }
+            return results[bestStart + Math.floor((bestLen - 1) / 2)];
+        }
+
+        function isRectangularPoly(pts, bbox) {
+            if (pts.length !== 4) return false;
+            const angles = [];
+            for (let i = 0; i < 4; i++) angles.push(computeCornerAngle(pts[(i - 1 + 4) % 4], pts[i], pts[(i + 1) % 4]));
+            const avg = angles.reduce((a, b) => a + b, 0) / 4;
+            if (avg < 65 || avg > 115) return false;
+            const corners = [{ x: bbox.minX, y: bbox.minY }, { x: bbox.maxX, y: bbox.minY }, { x: bbox.maxX, y: bbox.maxY }, { x: bbox.minX, y: bbox.maxY }];
+            const tol = Math.max(bbox.w, bbox.h) * 0.25;
+            let matched = 0;
+            for (const c of corners) for (const p of pts) { if (Math.hypot(c.x - p.x, c.y - p.y) < tol) { matched++; break; } }
+            return matched >= 4;
+        }
+
+        function tryCircleFit(points, bbox) {
+            const cx = (bbox.minX + bbox.maxX) / 2, cy = (bbox.minY + bbox.maxY) / 2;
+            const avgR = (bbox.w + bbox.h) / 4;
+            let err = 0;
+            for (const p of points) err += Math.abs(Math.hypot(p.x - cx, p.y - cy) - avgR) / avgR;
+            return err / points.length;
+        }
+
+        function tryEllipseFit(points, bbox) {
+            const cx = (bbox.minX + bbox.maxX) / 2, cy = (bbox.minY + bbox.maxY) / 2;
+            const rx = bbox.w / 2, ry = bbox.h / 2;
+            if (rx < 5 || ry < 5) return 1;
+            let err = 0;
+            for (const p of points) {
+                const dx = (p.x - cx) / rx, dy = (p.y - cy) / ry;
+                err += Math.abs(Math.sqrt(dx * dx + dy * dy) - 1);
+            }
+            return err / points.length;
+        }
+
+        function recognizeShape(points) {
+            if (points.length < 8) return null;
+            const cleaned = [points[0]];
+            for (let i = 1; i < points.length; i++) {
+                const prev = cleaned[cleaned.length - 1];
+                if (Math.hypot(points[i].x - prev.x, points[i].y - prev.y) > 2) cleaned.push(points[i]);
+            }
+            if (cleaned.length < 8) return null;
+            const bbox = computeBBox(cleaned);
+            const size = Math.max(bbox.w, bbox.h);
+            if (size < 30) return null;
+            const first = cleaned[0], last = cleaned[cleaned.length - 1];
+            const gap = Math.hypot(last.x - first.x, last.y - first.y);
+            const isClosed = gap < size * 0.30;
+            const ratio = Math.min(bbox.w, bbox.h) / Math.max(bbox.w, bbox.h);
+
+            if (isClosed) {
+                const poly = detectPolygon(cleaned, true, size);
+                if (poly && poly.length >= 3 && poly.length <= 15) {
+                    const n = poly.length;
+                    if (n >= 8) {
+                        const ce = tryCircleFit(poly, bbox);
+                        if (ce < 0.05 && ratio > 0.85) return { type: 'circle', cx: (bbox.minX + bbox.maxX) / 2, cy: (bbox.minY + bbox.maxY) / 2, r: (bbox.w + bbox.h) / 4 };
+                        const ee = tryEllipseFit(poly, bbox);
+                        if (ee < 0.06 && ratio > 0.40 && ratio < 0.90) return { type: 'ellipse', cx: (bbox.minX + bbox.maxX) / 2, cy: (bbox.minY + bbox.maxY) / 2, rx: bbox.w / 2, ry: bbox.h / 2 };
+                    }
+                    if (n === 3) return { type: 'triangle', points: poly, sides: 3 };
+                    if (n === 4) {
+                        if (isRectangularPoly(poly, bbox) && ratio > 0.45) return { type: 'rect', bbox };
+                        return { type: 'polygon', points: poly, sides: 4 };
+                    }
+                    return { type: 'polygon', points: poly, sides: n };
+                }
+            }
+            if (isClosed && cleaned.length > 15) {
+                const ce = tryCircleFit(cleaned, bbox);
+                if (ce < 0.12 && ratio > 0.85) return { type: 'circle', cx: (bbox.minX + bbox.maxX) / 2, cy: (bbox.minY + bbox.maxY) / 2, r: (bbox.w + bbox.h) / 4 };
+                const ee = tryEllipseFit(cleaned, bbox);
+                if (ee < 0.15 && ratio > 0.40 && ratio < 0.90) return { type: 'ellipse', cx: (bbox.minX + bbox.maxX) / 2, cy: (bbox.minY + bbox.maxY) / 2, rx: bbox.w / 2, ry: bbox.h / 2 };
+            }
+            if (!isClosed) {
+                const simplified = simplifyRDP(cleaned, size * 0.04);
+                if (simplified.length === 2) return { type: 'line', x1: simplified[0].x, y1: simplified[0].y, x2: simplified[1].x, y2: simplified[1].y };
+                if (simplified.length === 3) {
+                    const p0 = simplified[0], p1 = simplified[1], p2 = simplified[2];
+                    const seg1 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+                    const seg2 = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+                    if (seg2 < seg1 * 0.6 && seg1 > size * 0.4) return { type: 'arrow', x1: p0.x, y1: p0.y, x2: p1.x, y2: p1.y };
+                }
+            }
+            return null;
+        }
+
+        const POLYGON_NAMES = { 3: 'ത്രികോണം', 4: 'ചതുർഭുജം', 5: 'പഞ്ചഭുജം', 6: 'ഷഡ്ഭുജം', 7: 'സപ്തഭുജം', 8: 'അഷ്ടഭുജം', 9: 'നവഭുജം', 10: 'ദശഭുജം', 11: 'ഏകാദശഭുജം', 12: 'ദ്വാദശഭുജം', 13: 'ത്രയോദശഭുജം', 14: 'ചതുർദശഭുജം', 15: 'പഞ്ചദശഭുജം' };
+
+        function getShapeName(shape) {
+            const baseNames = { circle: 'വൃത്തം', ellipse: 'ഓവൽ', rect: 'ചതുരം', line: 'രേഖ', arrow: 'അമ്പടയാളം' };
+            if (baseNames[shape.type]) return baseNames[shape.type];
+            if (shape.points && shape.sides) return POLYGON_NAMES[shape.sides] || `${shape.sides} വശങ്ങളുള്ള ബഹുഭുജം`;
+            return shape.type;
+        }
+
+        function drawPerfectShape(shape) {
+            drawnElementIdCounter++;
+            const id = 'drawn_elem_' + drawnElementIdCounter;
+            const g = newDrawnGroup(id);
+            const w = getEffectiveWidth(), o = getEffectiveOpacity(), c = drawColor;
+            const op = o < 1 ? ` stroke-opacity="${o.toFixed(2)}"` : '';
+            let svg = '';
+            if (shape.type === 'circle') svg = `<circle cx="${shape.cx.toFixed(1)}" cy="${shape.cy.toFixed(1)}" r="${shape.r.toFixed(1)}" fill="none" stroke="${c}" stroke-width="${w}"${op}/>`;
+            else if (shape.type === 'ellipse') svg = `<ellipse cx="${shape.cx.toFixed(1)}" cy="${shape.cy.toFixed(1)}" rx="${shape.rx.toFixed(1)}" ry="${shape.ry.toFixed(1)}" fill="none" stroke="${c}" stroke-width="${w}"${op}/>`;
+            else if (shape.type === 'rect') { const b = shape.bbox; svg = `<rect x="${b.minX.toFixed(1)}" y="${b.minY.toFixed(1)}" width="${b.w.toFixed(1)}" height="${b.h.toFixed(1)}" fill="none" stroke="${c}" stroke-width="${w}" rx="2"${op}/>`; }
+            else if (shape.type === 'polygon' || shape.type === 'triangle') { const pts = shape.points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '); svg = `<polygon points="${pts}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round"${op}/>`; }
+            else if (shape.type === 'line') svg = `<line x1="${shape.x1.toFixed(1)}" y1="${shape.y1.toFixed(1)}" x2="${shape.x2.toFixed(1)}" y2="${shape.y2.toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${op}/>`;
+            else if (shape.type === 'arrow') {
+                const len = Math.hypot(shape.x2 - shape.x1, shape.y2 - shape.y1) || 1;
+                const ux = (shape.x2 - shape.x1) / len, uy = (shape.y2 - shape.y1) / len;
+                const hs = 7 + w * 1.8;
+                const lx = shape.x2 - ux * hs * 0.85, ly = shape.y2 - uy * hs * 0.85;
+                const ang = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
+                const a1 = ang + Math.PI - 0.45, a2 = ang + Math.PI + 0.45;
+                const p1 = `${(shape.x2 + hs * Math.cos(a1)).toFixed(1)},${(shape.y2 + hs * Math.sin(a1)).toFixed(1)}`;
+                const p2 = `${(shape.x2 + hs * Math.cos(a2)).toFixed(1)},${(shape.y2 + hs * Math.sin(a2)).toFixed(1)}`;
+                svg = `<line x1="${shape.x1.toFixed(1)}" y1="${shape.y1.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${op}/><polygon points="${shape.x2.toFixed(1)},${shape.y2.toFixed(1)} ${p1} ${p2}" fill="${c}"/>`;
+            }
+            if (!svg) return;
+            g.innerHTML = svg + getHitAreaMarkup(svg);
+            registerDrawn(g);
+            showShapeToast(getShapeName(shape));
+        }
+
+        function showToast(html) {
+            const toast = document.getElementById('shapeToast');
+            const content = document.getElementById('toastContent');
+            if (content) content.innerHTML = html;
+            toast.classList.add('show');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.classList.remove('show'), 1700);
+        }
+
+        function showShapeToast(name) { showToast('✨ ' + name + ' കണ്ടെത്തി!'); }
+
+        function toggleShapeRecognition() {
+            shapeRecognitionEnabled = !shapeRecognitionEnabled;
+            const btn = document.getElementById('btnAutoShape');
+            btn.classList.toggle('active', shapeRecognitionEnabled);
+            btn.textContent = shapeRecognitionEnabled ? '✨ ഓട്ടോ ✓' : '✨ ഓട്ടോ';
+        }
+
+        function isRoadContext() {
+            if (currentMode === 'road') return true;
+            if (currentMode === 'shape' && isRoadShapeType(currentShapeType)) return true;
+            return false;
+        }
+
+        function refreshSizeSlider() {
+            const slider = document.getElementById('sizeSlider');
+            const label = document.getElementById('sizeVal');
+            if (!slider || !label) return;
+            const val = isRoadContext() ? roadSize : drawSize;
+            slider.value = val;
+            label.innerText = val;
+        }
+
+        function quickStraightRoad() {
+            setMode('shape');
+            setShapeType('road');
+            showToast('🛣️ നേർവഴി — വരയ്ക്കുക');
+        }
+
+        function getElementTransform(el) {
+            const t = el.getAttribute('transform') || '';
+            const tM = /translate\(\s*(-?[\d.]+)[ ,]+(-?[\d.]+)\s*\)/.exec(t);
+            const rM = /rotate\(\s*(-?[\d.]+)/.exec(t);
+            const sM = /scale\(\s*(-?[\d.]+)[ ,]+(-?[\d.]+)\s*\)/.exec(t);
+            return { tx: tM ? parseFloat(tM[1]) : 0, ty: tM ? parseFloat(tM[2]) : 0, angle: rM ? parseFloat(rM[1]) : 0, sx: sM ? parseFloat(sM[1]) : 1, sy: sM ? parseFloat(sM[2]) : 1 };
+        }
+
+        function getElementLocalCenter(el) {
+            try { const b = el.getBBox(); return { cx: b.x + b.width / 2, cy: b.y + b.height / 2, bbox: b }; }
+            catch (err) { return { cx: 0, cy: 0, bbox: { x: 0, y: 0, width: 0, height: 0 } }; }
+        }
+
+        function applyElementTransformCached(el, tx, ty, angle, scaleX, scaleY, cx, cy) {
+            const sx = (scaleX === undefined || isNaN(scaleX) || !isFinite(scaleX)) ? 1 : scaleX;
+            const sy = (scaleY === undefined || isNaN(scaleY) || !isFinite(scaleY)) ? 1 : scaleY;
+            const a = angle || 0;
+            let tr = `translate(${tx.toFixed(2)}, ${ty.toFixed(2)})`;
+            if (Math.abs(a) > 0.01) tr += ` rotate(${a.toFixed(2)}, ${cx.toFixed(2)}, ${cy.toFixed(2)})`;
+            if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) tr += ` translate(${cx.toFixed(2)}, ${cy.toFixed(2)}) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) translate(${(-cx).toFixed(2)}, ${(-cy).toFixed(2)})`;
+            el.setAttribute('transform', tr);
+        }
+
+        function getElementWorldBBox(el) {
+            let bb;
+            try { bb = el.getBBox(); } catch (e) { return { x: 0, y: 0, width: 0, height: 0 }; }
+            const d = getElementTransform(el);
+            const cx = bb.x + bb.width / 2, cy = bb.y + bb.height / 2;
+            const sx = d.sx || 1, sy = d.sy || 1;
+            const rad = (d.angle || 0) * Math.PI / 180;
+            const cos = Math.cos(rad), sin = Math.sin(rad);
+            const corns = [{ x: bb.x, y: bb.y }, { x: bb.x + bb.width, y: bb.y }, { x: bb.x + bb.width, y: bb.y + bb.height }, { x: bb.x, y: bb.y + bb.height }];
+            const wc = corns.map(p => {
+                let x = cx + (p.x - cx) * sx, y = cy + (p.y - cy) * sy;
+                const dx = x - cx, dy = y - cy;
+                x = cx + dx * cos - dy * sin;
+                y = cy + dx * sin + dy * cos;
+                return { x: x + d.tx, y: y + d.ty };
+            });
+            const xs = wc.map(p => p.x), ys = wc.map(p => p.y);
+            return { x: Math.min(...xs), y: Math.min(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
+        }
+
+        function getActualSelectionBBox() {
+            if (lassoSelection.length === 0) return null;
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            lassoSelection.forEach(el => {
+                const bb = getElementWorldBBox(el);
+                minX = Math.min(minX, bb.x); minY = Math.min(minY, bb.y);
+                maxX = Math.max(maxX, bb.x + bb.width); maxY = Math.max(maxY, bb.y + bb.height);
+            });
+            return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+        }
+
+        function getSelectionBBox() {
+            const bb = getActualSelectionBBox();
+            if (!bb) return null;
+            let x = bb.x - SELECTION_PAD;
+            let y = bb.y - SELECTION_PAD;
+            let w = bb.width + SELECTION_PAD * 2;
+            let h = bb.height + SELECTION_PAD * 2;
+            if (w < SELECTION_MIN_SIZE) { x -= (SELECTION_MIN_SIZE - w) / 2; w = SELECTION_MIN_SIZE; }
+            if (h < SELECTION_MIN_SIZE) { y -= (SELECTION_MIN_SIZE - h) / 2; h = SELECTION_MIN_SIZE; }
+            return { x, y, width: w, height: h };
+        }
+
+        function isPointInSelection(pt) {
+            if (lassoSelection.length === 0) return false;
+            const bbox = getSelectionBBox();
+            if (!bbox) return false;
+            return pt.x >= bbox.x && pt.x <= bbox.x + bbox.width && pt.y >= bbox.y && pt.y <= bbox.y + bbox.height;
+        }
+
+        function renderSelectionOverlay() {
+            const grp = document.getElementById('selectionOverlayGroup');
+            grp.innerHTML = '';
+            if (lassoSelection.length === 0) { rotateHandleRefs = { line: null, circle: null, icon: null }; return; }
+            const bbox = getSelectionBBox();
+            if (!bbox || bbox.width === 0 || bbox.height === 0) return;
+
+            const rect = document.createElementNS(SVG_NS, 'rect');
+            rect.setAttribute('x', bbox.x); rect.setAttribute('y', bbox.y);
+            rect.setAttribute('width', bbox.width); rect.setAttribute('height', bbox.height);
+            rect.setAttribute('fill', 'rgba(37,99,235,0.06)'); rect.setAttribute('stroke', '#2563eb');
+            rect.setAttribute('stroke-width', '1.8'); rect.setAttribute('stroke-dasharray', '6,4');
+            rect.setAttribute('pointer-events', 'none');
+            grp.appendChild(rect);
+
+            const handles = [
+                { type: 'nw', x: bbox.x, y: bbox.y, cursor: 'nwse-resize' },
+                { type: 'n', x: bbox.x + bbox.width / 2, y: bbox.y, cursor: 'ns-resize' },
+                { type: 'ne', x: bbox.x + bbox.width, y: bbox.y, cursor: 'nesw-resize' },
+                { type: 'e', x: bbox.x + bbox.width, y: bbox.y + bbox.height / 2, cursor: 'ew-resize' },
+                { type: 'se', x: bbox.x + bbox.width, y: bbox.y + bbox.height, cursor: 'nwse-resize' },
+                { type: 's', x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height, cursor: 'ns-resize' },
+                { type: 'sw', x: bbox.x, y: bbox.y + bbox.height, cursor: 'nesw-resize' },
+                { type: 'w', x: bbox.x, y: bbox.y + bbox.height / 2, cursor: 'ew-resize' }
+            ];
+            handles.forEach(h => {
+                const c = document.createElementNS(SVG_NS, 'circle');
+                c.setAttribute('cx', h.x); c.setAttribute('cy', h.y); c.setAttribute('r', '10');
+                c.setAttribute('fill', '#ffffff'); c.setAttribute('stroke', '#2563eb'); c.setAttribute('stroke-width', '2.5');
+                c.setAttribute('class', 'resize-handle'); c.setAttribute('data-handle', h.type);
+                c.style.cursor = h.cursor;
+                c.addEventListener('pointerdown', (e) => startResize(e, h.type));
+                grp.appendChild(c);
+            });
+
+            const rotX = bbox.x + bbox.width / 2, rotY = bbox.y - 48;
+            const line = document.createElementNS(SVG_NS, 'line');
+            line.setAttribute('x1', rotX); line.setAttribute('y1', bbox.y);
+            line.setAttribute('x2', rotX); line.setAttribute('y2', rotY + 18);
+            line.setAttribute('stroke', '#2563eb'); line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke-dasharray', '4,3'); line.setAttribute('pointer-events', 'none');
+            grp.appendChild(line);
+
+            const rc = document.createElementNS(SVG_NS, 'circle');
+            rc.setAttribute('cx', rotX); rc.setAttribute('cy', rotY); rc.setAttribute('r', '18');
+            rc.setAttribute('fill', '#2563eb'); rc.setAttribute('stroke', '#ffffff'); rc.setAttribute('stroke-width', '3');
+            rc.setAttribute('class', 'rotate-handle');
+            rc.style.filter = 'drop-shadow(0 3px 6px rgba(37,99,235,0.45))';
+            rc.addEventListener('pointerdown', startSelectionRotate);
+            grp.appendChild(rc);
+
+            const ic = document.createElementNS(SVG_NS, 'text');
+            ic.setAttribute('x', rotX); ic.setAttribute('y', rotY);
+            ic.setAttribute('font-size', '22'); ic.setAttribute('font-weight', 'bold');
+            ic.setAttribute('text-anchor', 'middle'); ic.setAttribute('dominant-baseline', 'central');
+            ic.setAttribute('fill', '#ffffff'); ic.setAttribute('pointer-events', 'none');
+            ic.textContent = '↻';
+            grp.appendChild(ic);
+
+            rotateHandleRefs.line = line; rotateHandleRefs.circle = rc; rotateHandleRefs.icon = ic;
+        }
+
+        function moveRotateHandle(mx, my) {
+            if (!rotateHandleRefs.circle) return;
+            rotateHandleRefs.circle.setAttribute('cx', mx); rotateHandleRefs.circle.setAttribute('cy', my);
+            if (rotateHandleRefs.icon) { rotateHandleRefs.icon.setAttribute('x', mx); rotateHandleRefs.icon.setAttribute('y', my); }
+            if (rotateHandleRefs.line) { rotateHandleRefs.line.setAttribute('x2', mx); rotateHandleRefs.line.setAttribute('y2', my); }
+        }
+
+        function updateOverlayPositions(bbox) {
+            const grp = document.getElementById('selectionOverlayGroup');
+            const rect = grp.querySelector('rect');
+            if (rect) {
+                rect.setAttribute('x', bbox.x); rect.setAttribute('y', bbox.y);
+                rect.setAttribute('width', bbox.width); rect.setAttribute('height', bbox.height);
+            }
+            const hp = {
+                nw: [bbox.x, bbox.y], n: [bbox.x + bbox.width / 2, bbox.y], ne: [bbox.x + bbox.width, bbox.y],
+                e: [bbox.x + bbox.width, bbox.y + bbox.height / 2],
+                se: [bbox.x + bbox.width, bbox.y + bbox.height], s: [bbox.x + bbox.width / 2, bbox.y + bbox.height],
+                sw: [bbox.x, bbox.y + bbox.height], w: [bbox.x, bbox.y + bbox.height / 2]
+            };
+            grp.querySelectorAll('.resize-handle').forEach(c => {
+                const p = hp[c.getAttribute('data-handle')];
+                if (p) { c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); }
+            });
+            const rotX = bbox.x + bbox.width / 2, rotY = bbox.y - 48;
+            if (rotateHandleRefs.line) {
+                rotateHandleRefs.line.setAttribute('x1', rotX); rotateHandleRefs.line.setAttribute('y1', bbox.y);
+                rotateHandleRefs.line.setAttribute('x2', rotX); rotateHandleRefs.line.setAttribute('y2', rotY + 18);
+            }
+            if (rotateHandleRefs.circle) { rotateHandleRefs.circle.setAttribute('cx', rotX); rotateHandleRefs.circle.setAttribute('cy', rotY); }
+            if (rotateHandleRefs.icon) { rotateHandleRefs.icon.setAttribute('x', rotX); rotateHandleRefs.icon.setAttribute('y', rotY); }
+        }
+
+        function setSelection(elements) {
+            lassoSelection.forEach(el => el.classList.remove('lasso-selected'));
+            if (selectedElement) selectedElement.classList.remove('selected-element');
+            lassoSelection = (elements || []).filter(Boolean);
+            selectedElement = lassoSelection.length === 1 ? lassoSelection[0] : null;
+            lassoSelection.forEach(el => el.classList.add('lasso-selected'));
+            renderSelectionOverlay();
+        }
+
+        function clearSelection() { setSelection([]); }
+
+        function selectAllElements() {
+            const items = document.querySelectorAll('#userDrawnLayer .drawn-item, #landmarksLayer .landmark-item');
+            if (items.length === 0) return;
+            setSelection(Array.from(items));
+            setMode('select');
+        }
+
+        function startResize(e, handle) {
+            if (lassoSelection.length === 0) return;
+            e.preventDefault(); e.stopPropagation();
+            const actualBBox = getActualSelectionBBox();
+            const displayBBox = getSelectionBBox();
+            if (!actualBBox || !displayBBox) return;
+            const sp = getSvgCoordinates(e);
+            transformStartSnapshots = snapshotTransforms(lassoSelection);
+            resizeState = {
+                handle, startPt: sp,
+                actualBBox: actualBBox,
+                displayBBox: displayBBox,
+                elements: lassoSelection.map(el => {
+                    const d = getElementTransform(el);
+                    const l = getElementLocalCenter(el);
+                    return { el, tx: d.tx, ty: d.ty, angle: d.angle, sx: d.sx, sy: d.sy, cx: l.cx, cy: l.cy, worldCx: d.tx + l.cx, worldCy: d.ty + l.cy };
+                })
+            };
+            document.addEventListener('pointermove', onResize);
+            document.addEventListener('pointerup', stopResize);
+            document.addEventListener('pointercancel', stopResize);
+        }
+
+        function onResize(e) {
+            if (!resizeState) return;
+            e.preventDefault();
+            const pt = getSvgCoordinates(e);
+            const dx = pt.x - resizeState.startPt.x, dy = pt.y - resizeState.startPt.y;
+            const h = resizeState.handle;
+            const ab = resizeState.actualBBox;
+
+            let nActualX = ab.x, nActualY = ab.y, nActualW = ab.width, nActualH = ab.height;
+            if (h.includes('w')) { nActualX += dx; nActualW -= dx; }
+            if (h.includes('e')) { nActualW += dx; }
+            if (h.includes('n')) { nActualY += dy; nActualH -= dy; }
+            if (h.includes('s')) { nActualH += dy; }
+
+            if (nActualW < 4) nActualW = 4;
+            if (nActualH < 4) nActualH = 4;
+
+            const scX = nActualW / ab.width;
+            const scY = nActualH / ab.height;
+
+            const nCx = nActualX + nActualW / 2, nCy = nActualY + nActualH / 2;
+            const oldCx = ab.x + ab.width / 2, oldCy = ab.y + ab.height / 2;
+
+            resizeState.elements.forEach(o => {
+                const wcx = nCx + (o.worldCx - oldCx) * scX;
+                const wcy = nCy + (o.worldCy - oldCy) * scY;
+                applyElementTransformCached(o.el, wcx - o.cx, wcy - o.cy, o.angle, o.sx * scX, o.sy * scY, o.cx, o.cy);
+            });
+
+            const newDisplay = getSelectionBBox();
+            if (newDisplay) updateOverlayPositions(newDisplay);
+        }
+
+        function stopResize() {
+            if (transformStartSnapshots) {
+                pushTransformHistory(transformStartSnapshots);
+                transformStartSnapshots = null;
+            }
+            resizeState = null;
+            document.removeEventListener('pointermove', onResize);
+            document.removeEventListener('pointerup', stopResize);
+            document.removeEventListener('pointercancel', stopResize);
+        }
+
+        function startSelectionMove(e) {
+            if (lassoSelection.length === 0) return;
+            if (!isLeftMouseButton(e)) return;
+            e.preventDefault(); e.stopPropagation();
+
+            const pt = getSvgCoordinates(e);
+            transformStartSnapshots = snapshotTransforms(lassoSelection);
+            selectionMoveState = {
+                startPt: { x: pt.x, y: pt.y },
+                elements: lassoSelection.map(el => {
+                    const d = getElementTransform(el);
+                    const l = getElementLocalCenter(el);
+                    return { el, tx: d.tx, ty: d.ty, angle: d.angle, sx: d.sx, sy: d.sy, cx: l.cx, cy: l.cy };
+                })
+            };
+            document.addEventListener('pointermove', onSelectionMove);
+            document.addEventListener('pointerup', stopSelectionMove);
+            document.addEventListener('pointercancel', stopSelectionMove);
+        }
+
+        function onSelectionMove(e) {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
+            if (!selectionMoveState) return;
+            e.preventDefault();
+            const pt = getSvgCoordinates(e);
+            const dx = pt.x - selectionMoveState.startPt.x;
+            const dy = pt.y - selectionMoveState.startPt.y;
+            selectionMoveState.elements.forEach(o => {
+                applyElementTransformCached(o.el, o.tx + dx, o.ty + dy, o.angle, o.sx, o.sy, o.cx, o.cy);
+            });
+            const bb = getSelectionBBox();
+            if (bb) updateOverlayPositions(bb);
+        }
+
+        function stopSelectionMove() {
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
+            if (transformStartSnapshots) {
+                pushTransformHistory(transformStartSnapshots);
+                transformStartSnapshots = null;
+            }
+            selectionMoveState = null;
+            document.removeEventListener('pointermove', onSelectionMove);
+            document.removeEventListener('pointerup', stopSelectionMove);
+            document.removeEventListener('pointercancel', stopSelectionMove);
+        }
+
+        function startSelectionRotate(e) {
+            if (lassoSelection.length === 0) return;
+            e.preventDefault(); e.stopPropagation();
+            const sb = getSelectionBBox();
+            const cx = sb.x + sb.width / 2, cy = sb.y + sb.height / 2;
+            const sp = getSvgCoordinates(e);
+            transformStartSnapshots = snapshotTransforms(lassoSelection);
+            selectionRotateState = {
+                selCx: cx, selCy: cy,
+                startAngle: Math.atan2(sp.y - cy, sp.x - cx),
+                elements: lassoSelection.map(el => {
+                    const d = getElementTransform(el);
+                    const l = getElementLocalCenter(el);
+                    return { el, tx: d.tx, ty: d.ty, angle: d.angle, sx: d.sx, sy: d.sy, cx: l.cx, cy: l.cy };
+                })
+            };
+            isRotatingSelection = true;
+            document.addEventListener('pointermove', onSelectionRotate);
+            document.addEventListener('pointerup', stopSelectionRotate);
+            document.addEventListener('pointercancel', stopSelectionRotate);
+        }
+
+        function onSelectionRotate(e) {
+            if (!isRotatingSelection || !selectionRotateState) return;
+            e.preventDefault();
+            lastRotateEvent = e;
+            if (rotateRafPending) return;
+            rotateRafPending = true;
+            requestAnimationFrame(processRotationFrame);
+        }
+
+        function processRotationFrame() {
+            rotateRafPending = false;
+            if (!isRotatingSelection || !selectionRotateState || !lastRotateEvent) return;
+            const e = lastRotateEvent;
+            lastRotateEvent = null;
+            const pt = getSvgCoordinates(e);
+            const { selCx, selCy, startAngle, elements } = selectionRotateState;
+            const curAngle = Math.atan2(pt.y - selCy, pt.x - selCx);
+            let deltaDeg = (curAngle - startAngle) * 180 / Math.PI;
+            if (e.shiftKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
+            const rad = deltaDeg * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
+            for (let i = 0; i < elements.length; i++) {
+                const o = elements[i];
+                const dx = o.tx + o.cx - selCx, dy = o.ty + o.cy - selCy;
+                const nwx = selCx + dx * cos - dy * sin, nwy = selCy + dx * sin + dy * cos;
+                applyElementTransformCached(o.el, nwx - o.cx, nwy - o.cy, o.angle + deltaDeg, o.sx, o.sy, o.cx, o.cy);
+            }
+            moveRotateHandle(pt.x, pt.y);
+        }
+
+        function stopSelectionRotate() {
+            if (transformStartSnapshots) {
+                pushTransformHistory(transformStartSnapshots);
+                transformStartSnapshots = null;
+            }
+            isRotatingSelection = false;
+            selectionRotateState = null;
+            lastRotateEvent = null;
+            rotateRafPending = false;
+            document.removeEventListener('pointermove', onSelectionRotate);
+            document.removeEventListener('pointerup', stopSelectionRotate);
+            document.removeEventListener('pointercancel', stopSelectionRotate);
+            if (lassoSelection.length > 0) renderSelectionOverlay();
+        }
+
+        function setMode(mode) {
+            const prev = currentMode;
+            currentMode = mode;
+            if (mode !== 'select') previousToolBeforeLongPress = null;
+            ['select', 'pen', 'highlighter', 'eraser', 'lasso', 'shape', 'text', 'road'].forEach(m => {
+                const b = document.getElementById('mode_' + m);
+                if (b) b.classList.toggle('active', m === mode);
+            });
+            document.getElementById('penTypeRow').classList.toggle('hidden', mode !== 'pen');
+            document.getElementById('shapeTypeRow').classList.toggle('hidden', mode !== 'shape');
+            document.getElementById('eraserTypeRow').classList.toggle('hidden', mode !== 'eraser');
+            document.getElementById('roadHelpRow').classList.toggle('hidden', mode !== 'road');
+            const svg = document.getElementById('sketchSvg');
+            svg.className.baseVal = svg.className.baseVal.replace(/mode-\w+/g, '').trim();
+            if (mode !== 'select') svg.classList.add('mode-' + mode);
+            const l2s = (prev === 'lasso' && mode === 'select');
+            if (!l2s && mode !== 'select') clearSelection();
+            refreshSizeSlider();
+            scheduleAutoSave();
+        }
+
+        function setPenType(t) { currentPenType = t; ['fountain', 'ballpoint', 'brush', 'pencil', 'marker'].forEach(x => { const b = document.getElementById('pen_' + x); if (b) b.classList.toggle('active', x === t); }); scheduleAutoSave(); }
+        function setShapeType(t) {
+            currentShapeType = t;
+            ['line', 'rect', 'circle', 'arrow', 'triangle', 'star', 'road', 'curved_road', 's_road'].forEach(x => {
+                const b = document.getElementById('shape_' + x);
+                if (b) b.classList.toggle('active', x === t);
+            });
+            refreshSizeSlider();
+            scheduleAutoSave();
+        }
+        function setEraserType(t) { currentEraserType = t; ['line', 'area'].forEach(x => { const b = document.getElementById('eraser_' + x); if (b) b.classList.toggle('active', x === t); }); scheduleAutoSave(); }
+        function setColor(c, b) { drawColor = c; document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active')); if (b) b.classList.add('active'); scheduleAutoSave(); }
+
+        function setSize(v) {
+            const val = parseFloat(v) || 1;
+            if (isRoadContext()) roadSize = val;
+            else drawSize = val;
+            document.getElementById('sizeVal').innerText = val;
+        }
+        function setOpacity(v) { drawOpacity = (parseFloat(v) || 100) / 100; document.getElementById('opacityVal').innerText = v; }
+
+        function getEffectiveWidth() {
+            if (currentMode === 'highlighter') return Math.max(drawSize * 2.5, 8);
+            if (currentMode === 'pen') { const p = PEN_PRESETS[currentPenType] || PEN_PRESETS.ballpoint; return drawSize * p.widthMul; }
+            return drawSize;
+        }
+        function getEffectiveOpacity() {
+            if (currentMode === 'highlighter') return Math.min(drawOpacity, 0.4);
+            if (currentMode === 'pen') { const p = PEN_PRESETS[currentPenType] || PEN_PRESETS.ballpoint; return drawOpacity * p.opacityMul; }
+            return drawOpacity;
+        }
+        function getEffectiveCap() { if (currentMode === 'pen') { const p = PEN_PRESETS[currentPenType] || PEN_PRESETS.ballpoint; return p.cap; } return 'round'; }
+
+        function getRoadWidth() { return Math.max(10, roadSize * 4); }
+
+        function switchTab(t) {
+            document.getElementById('tabDetails').classList.toggle('hidden', t !== 'details');
+            document.getElementById('tabTools').classList.toggle('hidden', t !== 'tools');
+            document.getElementById('tabBtnDetails').className = t === 'details' ? 'flex-1 text-center py-2 px-4 border-b-2 border-blue-600 text-blue-600 font-bold' : 'flex-1 text-center py-2 px-4 text-gray-500 hover:text-blue-600';
+            document.getElementById('tabBtnTools').className = t === 'tools' ? 'flex-1 text-center py-2 px-4 border-b-2 border-blue-600 text-blue-600 font-bold' : 'flex-1 text-center py-2 px-4 text-gray-500 hover:text-blue-600';
+            const da = document.getElementById('drawingAreaWrapper');
+            if (da) { if (t === 'details') da.classList.add('hidden'); else da.classList.remove('hidden'); }
+        }
+
+        function updateSketch() {
+            document.getElementById('outHeaderInfo').innerText = document.getElementById('inVillage').value;
+            document.getElementById('outNumber').innerText = document.getElementById('inNumber').value || '-';
+            document.getElementById('outBlock').innerText = document.getElementById('inBlock').value || '-';
+            document.getElementById('outThandaper').innerText = document.getElementById('inThandaper').value || '-';
+            document.getElementById('outApplicantName').innerText = document.getElementById('inApplicantName').value.trim() || '-';
+            document.getElementById('outInstitutionName').innerText = document.getElementById('inInstitutionName').value.trim() || '.................';
+            const dateVal = document.getElementById('inDate').value;
+            if (dateVal) { const parts = dateVal.split('-'); document.getElementById('outDate').innerText = `${parts[2]}/${parts[1]}/${parts[0]}`; }
+            else document.getElementById('outDate').innerText = '-';
+            document.getElementById('outVillageOfficer').innerText = document.getElementById('inVillageOfficer').value.trim() || '-';
+            const surveys = document.getElementById('inSurvey').value.split(',').map(s => s.trim()).filter(Boolean);
+            document.getElementById('outSurvey').innerHTML = surveys.length > 0 ? surveys.join('<br>') : '-';
+            const extents = document.getElementById('inExtent').value.split(',').map(s => s.trim()).filter(Boolean);
+            document.getElementById('outExtent').innerHTML = extents.length > 0 ? extents.join('<br>') : '-';
+            document.getElementById('outRoad').innerText = document.getElementById('inRoad').value;
+            scheduleAutoSave();
+        }
+
+        function zoomBy(f) {
+            const cx = viewBox.x + viewBox.w / 2, cy = viewBox.y + viewBox.h / 2;
+            let nw = viewBox.w / f, nh = viewBox.h / f;
+            if (nw > BASE_W * 3.0 || nw < BASE_W * 0.20) return;
+            viewBox = { x: cx - nw / 2, y: cy - nh / 2, w: nw, h: nh };
+            applyViewBox();
+            showZoomBadge();
+            scheduleAutoSave();
+        }
+        function resetZoom() { viewBox = { x: 0, y: 0, w: BASE_W, h: BASE_H }; applyViewBox(); showZoomBadge(); scheduleAutoSave(); }
+        function applyViewBox() { document.getElementById('sketchSvg').setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`); }
+
+        function handleWheelZoom(e) {
+            if (e.ctrlKey || !e.shiftKey) {
+                e.preventDefault();
+                const factor = e.deltaY < 0 ? 1.1 : 0.9;
+                zoomBy(factor);
+            }
+        }
+
+        function shapeMarkup(shape, x1, y1, x2, y2, preview) {
+            const c = drawColor, w = getEffectiveWidth(), o = getEffectiveOpacity();
+            const op = o < 1 ? ` stroke-opacity="${o.toFixed(2)}"` : '';
+            if (shape === 'line') return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${op}/>`;
+            if (shape === 'arrow') {
+                const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+                const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+                const hs = 7 + w * 1.8;
+                const lx = x2 - ux * hs * 0.85, ly = y2 - uy * hs * 0.85;
+                const a1 = Math.atan2(y2 - y1, x2 - x1) + Math.PI - 0.45, a2 = Math.atan2(y2 - y1, x2 - x1) + Math.PI + 0.45;
+                const p1 = `${(x2 + hs * Math.cos(a1)).toFixed(1)},${(y2 + hs * Math.sin(a1)).toFixed(1)}`;
+                const p2 = `${(x2 + hs * Math.cos(a2)).toFixed(1)},${(y2 + hs * Math.sin(a2)).toFixed(1)}`;
+                return `<line x1="${x1}" y1="${y1}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${op}/><polygon points="${x2},${y2} ${p1} ${p2}" fill="${c}"/>`;
+            }
+            if (shape === 'rect') return `<rect x="${Math.min(x1, x2)}" y="${Math.min(y1, y2)}" width="${Math.abs(x2 - x1)}" height="${Math.abs(y2 - y1)}" fill="none" stroke="${c}" stroke-width="${w}" rx="2"${op}/>`;
+            if (shape === 'circle') { const r = Math.hypot(x2 - x1, y2 - y1); return `<circle cx="${x1}" cy="${y1}" r="${r.toFixed(1)}" fill="none" stroke="${c}" stroke-width="${w}"${op}/>`; }
+            if (shape === 'triangle') { const rx = Math.min(x1, x2), ry = Math.min(y1, y2), rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1), cx = rx + rw / 2; return `<polygon points="${cx.toFixed(1)},${ry} ${(rx + rw)},${(ry + rh)} ${rx},${(ry + rh)}" fill="none" stroke="${c}" stroke-width="${w}"${op}/>`; }
+            if (shape === 'star') {
+                const rx = Math.min(x1, x2), ry = Math.min(y1, y2), rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+                const cx = rx + rw / 2, cy = ry + rh / 2, oR = Math.min(rw, rh) / 2, iR = oR * 0.4;
+                const pts = [];
+                for (let i = 0; i < 10; i++) { const r = i % 2 === 0 ? oR : iR; const a = -Math.PI / 2 + i * Math.PI / 5; pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`); }
+                return `<polygon points="${pts.join(' ')}" fill="none" stroke="${c}" stroke-width="${w}"${op}/>`;
+            }
+            if (shape === 'road' || shape === 'curved_road' || shape === 's_road') {
+                const rw = getRoadWidth();
+                let pd = '';
+                if (shape === 'road') pd = `M ${x1},${y1} L ${x2},${y2}`;
+                else if (shape === 'curved_road') { const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1; pd = `M ${x1},${y1} Q ${(mx - dy * 0.35).toFixed(1)},${(my + dx * 0.35).toFixed(1)} ${x2},${y2}`; }
+                else { const dx = x2 - x1, dy = y2 - y1; pd = `M ${x1},${y1} C ${(x1 + dx * 0.25 - dy * 0.35).toFixed(1)},${(y1 + dy * 0.25 + dx * 0.35).toFixed(1)} ${(x1 + dx * 0.75 + dy * 0.35).toFixed(1)},${(y1 + dy * 0.75 - dx * 0.35).toFixed(1)} ${x2},${y2}`; }
+                return roadPathMarkup(pd, rw);
+            }
+            return '';
+        }
+
+        function smoothPath(points) {
+            if (points.length < 2) return '';
+            if (points.length === 2) return `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} L ${points[1].x.toFixed(1)} ${points[1].y.toFixed(1)}`;
+            let d = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+            for (let i = 1; i < points.length - 1; i++) {
+                const mx = (points[i].x + points[i + 1].x) / 2, my = (points[i].y + points[i + 1].y) / 2;
+                d += ` Q ${points[i].x.toFixed(1)} ${points[i].y.toFixed(1)} ${mx.toFixed(1)} ${my.toFixed(1)}`;
+            }
+            const last = points[points.length - 1];
+            d += ` L ${last.x.toFixed(1)} ${last.y.toFixed(1)}`;
+            return d;
+        }
+
+        function roadPathMarkup(pathD, roadWidth) {
+            const innerWidth = Math.max(roadWidth - 3, 3);
+            return `<path d="${pathD}" fill="none" stroke="#64748b" stroke-width="${roadWidth}" stroke-linecap="butt" stroke-linejoin="round"/>` +
+                   `<path d="${pathD}" fill="none" stroke="#ffffff" stroke-width="${innerWidth}" stroke-linecap="butt" stroke-linejoin="round"/>` +
+                   `<path d="${pathD}" fill="none" stroke="#334155" stroke-width="1.2" stroke-dasharray="5,5" stroke-linecap="butt" stroke-linejoin="round"/>`;
+        }
+
+        function getHitAreaMarkup(svg) {
+            let hit = svg.replace(/stroke="[^"]*"/g, 'stroke="transparent"').replace(/fill="[^"]*"/g, 'fill="transparent"').replace(/stroke-width="[^"]*"/g, 'stroke-width="15"').replace(/fill-opacity="[^"]*"/g, 'fill-opacity="0"');
+            return hit.replace(/<([a-z]+)/g, '<$1 pointer-events="all"');
+        }
+
+        function onGlobalPointerDown(e) {
+            if (!isLeftMouseButton(e)) return;
+            if (activePointers.size >= 1) return;
+            if (currentMode === 'eraser') return;
+            if (currentMode === 'select') return;
+            if (e.target.closest && (e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle'))) return;
+
+            const svg = document.getElementById('sketchSvg');
+            let node = e.target;
+            let sketchEl = null;
+            while (node && node !== svg) {
+                if (node.classList && (node.classList.contains('drawn-item') || node.classList.contains('landmark-item'))) {
+                    sketchEl = node;
+                    break;
+                }
+                node = node.parentNode;
+            }
+            if (!sketchEl) return;
+
+            const clientPt = getClientPoint(e);
+            longPressStartPt = { x: clientPt.x, y: clientPt.y };
+            longPressElement = sketchEl;
+            longPressTriggered = false;
+
+            if (longPressTimer) clearTimeout(longPressTimer);
+            const elemRef = sketchEl;
+            const modeAtStart = currentMode;
+            const pointerId = e.pointerId;
+
+            longPressTimer = setTimeout(() => {
+                longPressTimer = null;
+                if (longPressElement !== elemRef) return;
+                longPressTriggered = true;
+                longPressElement = null;
+                longPressStartPt = null;
+
+                cancelActiveDrawing();
+
+                previousToolBeforeLongPress = modeAtStart;
+                currentMode = 'select';
+                ['select', 'pen', 'highlighter', 'eraser', 'lasso', 'shape', 'text', 'road'].forEach(m => {
+                    const b = document.getElementById('mode_' + m);
+                    if (b) b.classList.toggle('active', m === 'select');
+                });
+                document.getElementById('penTypeRow').classList.toggle('hidden', true);
+                document.getElementById('shapeTypeRow').classList.toggle('hidden', true);
+                document.getElementById('eraserTypeRow').classList.toggle('hidden', true);
+                document.getElementById('roadHelpRow').classList.toggle('hidden', true);
+                const svgEl = document.getElementById('sketchSvg');
+                svgEl.className.baseVal = svgEl.className.baseVal.replace(/mode-\w+/g, '').trim();
+                svgEl.classList.add('mode-select');
+                refreshSizeSlider();
+                previousToolBeforeLongPress = modeAtStart;
+
+                setSelection([elemRef]);
+                showToast('✏️ സെലക്ട് — വിരൽ എടുക്കാതെ move ചെയ്യാം');
+
+                const svgPt = getSvgCoordinates(e);
+                longPressMoveState = {
+                    pointerId: pointerId,
+                    startPt: { x: svgPt.x, y: svgPt.y },
+                    elements: lassoSelection.map(el => {
+                        const d = getElementTransform(el);
+                        const l = getElementLocalCenter(el);
+                        return { el, tx: d.tx, ty: d.ty, angle: d.angle, sx: d.sx, sy: d.sy, cx: l.cx, cy: l.cy };
+                    })
+                };
+                transformStartSnapshots = snapshotTransforms(lassoSelection);
+            }, 650);
+        }
+
+        function onGlobalPointerMove(e) {
+            if (longPressTimer && longPressStartPt) {
+                const cp = getClientPoint(e);
+                const dist = Math.hypot(cp.x - longPressStartPt.x, cp.y - longPressStartPt.y);
+                if (dist > 10) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                    longPressElement = null;
+                    longPressStartPt = null;
+                }
+            }
+
+            if (longPressMoveState && (e.pointerId === undefined || e.pointerId === longPressMoveState.pointerId)) {
+                e.preventDefault();
+                const pt = getSvgCoordinates(e);
+                const dx = pt.x - longPressMoveState.startPt.x;
+                const dy = pt.y - longPressMoveState.startPt.y;
+                longPressMoveState.elements.forEach(o => {
+                    applyElementTransformCached(o.el, o.tx + dx, o.ty + dy, o.angle, o.sx, o.sy, o.cx, o.cy);
+                });
+                const bb = getSelectionBBox();
+                if (bb) updateOverlayPositions(bb);
+            }
+        }
+
+        function onGlobalPointerUp(e) {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            longPressElement = null;
+            longPressStartPt = null;
+
+            if (longPressMoveState && (e.pointerId === undefined || e.pointerId === longPressMoveState.pointerId)) {
+                if (transformStartSnapshots) {
+                    pushTransformHistory(transformStartSnapshots);
+                    transformStartSnapshots = null;
+                }
+                longPressMoveState = null;
+            }
+        }
+
+        function initDrawingCanvas() {
+            const svg = document.getElementById('sketchSvg');
+            const container = document.getElementById('canvasContainer');
+
+            svg.addEventListener('contextmenu', (e) => e.preventDefault());
+            container.addEventListener('contextmenu', (e) => e.preventDefault());
+            svg.addEventListener('dragstart', (e) => e.preventDefault());
+            svg.addEventListener('drag', (e) => e.preventDefault());
+            svg.addEventListener('dragend', (e) => e.preventDefault());
+            svg.addEventListener('selectstart', (e) => e.preventDefault());
+
+            svg.addEventListener('pointerdown', onGlobalPointerDown, { capture: true, passive: false });
+            document.addEventListener('pointermove', onGlobalPointerMove);
+            document.addEventListener('pointerup', onGlobalPointerUp);
+            document.addEventListener('pointercancel', onGlobalPointerUp);
+
+            if (window.PointerEvent) {
+                svg.addEventListener('pointerdown', onCanvasDown, { passive: false });
+                svg.addEventListener('pointermove', onCanvasMove, { passive: false });
+                document.addEventListener('pointerup', onCanvasUp);
+                document.addEventListener('pointercancel', onCanvasUp);
+            } else {
+                svg.addEventListener('mousedown', onCanvasDown);
+                svg.addEventListener('mousemove', onCanvasMove);
+                document.addEventListener('mouseup', onCanvasUp);
+                svg.addEventListener('touchstart', onTouchStartFallback, { passive: false });
+                svg.addEventListener('touchmove', onTouchMoveFallback, { passive: false });
+                document.addEventListener('touchend', onTouchEndFallback);
+                document.addEventListener('touchcancel', onTouchEndFallback);
+            }
+
+            container.addEventListener('wheel', handleWheelZoom, { passive: false });
+        }
+
+        function onTouchStartFallback(e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                activePointers.clear();
+                activePointers.set('t0', { x: e.touches[0].clientX, y: e.touches[0].clientY });
+                activePointers.set('t1', { x: e.touches[1].clientX, y: e.touches[1].clientY });
+                cancelActiveDrawing();
+                startPinch();
+                return;
+            }
+            if (e.touches.length === 1 && !pinchState) {
+                onCanvasDown(e);
+            }
+        }
+        function onTouchMoveFallback(e) {
+            if (e.touches.length === 2 && pinchState) {
+                e.preventDefault();
+                activePointers.set('t0', { x: e.touches[0].clientX, y: e.touches[0].clientY });
+                activePointers.set('t1', { x: e.touches[1].clientX, y: e.touches[1].clientY });
+                updatePinch();
+                return;
+            }
+            if (e.touches.length === 1 && isDrawing) {
+                onCanvasMove(e);
+            }
+        }
+        function onTouchEndFallback(e) {
+            if (e.touches.length < 2) {
+                if (pinchState) { endPinch(); activePointers.clear(); return; }
+            }
+            if (e.touches.length === 0) {
+                onCanvasUp(e);
+            }
+        }
+
+        function isLeftMouseButton(e) {
+            if (e.pointerType && e.pointerType !== 'mouse') return true;
+            if (e.button !== undefined && e.button !== 0) return false;
+            if (e.which !== undefined && e.which !== 1) return false;
+            return true;
+        }
+
+        function onCanvasDown(e) {
+            if (e.pointerId !== undefined) {
+                activePointers.set(e.pointerId, getClientPoint(e));
+            }
+
+            if (activePointers.size === 2) {
+                e.preventDefault();
+                cancelActiveDrawing();
+                startPinch();
+                return;
+            }
+            if (activePointers.size > 2) { e.preventDefault(); return; }
+
+            if (!isLeftMouseButton(e)) return;
+            if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
+            if (e.isPrimary === false) return;
+
+            const target = e.target;
+            if (target.closest && (target.closest('.rotate-handle') || target.closest('.resize-handle'))) return;
+
+            const pt = getSvgCoordinates(e);
+
+            if (currentMode === 'select') {
+                if (target.closest && target.closest('.handle')) return;
+
+                if (lassoSelection.length > 0 && isPointInSelection(pt)) {
+                    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
+                    startSelectionMove(e);
+                    return;
+                }
+
+                const clickedEl = target.closest ? target.closest('.draggable-element') : null;
+                if (clickedEl) return;
+
+                if (previousToolBeforeLongPress) {
+                    const restoreMode = previousToolBeforeLongPress;
+                    previousToolBeforeLongPress = null;
+                    clearSelection();
+                    setMode(restoreMode);
+                    showToast('🔄 ' + modeName(restoreMode) + ' ലേക്ക് തിരികെ');
+                    return;
+                }
+
+                clearSelection();
+                return;
+            }
+
+            if (currentMode === 'eraser') {
+                e.preventDefault();
+                if (e.pointerId !== undefined) activePointerId = e.pointerId;
+                isDrawing = true; lastErasePt = null;
+                eraserStrokeMarks = [];
+                eraserStrokeRemoved = [];
+                eraseAtEvent(e); return;
+            }
+            if (target.closest && target.closest('.handle')) return;
+
+            if (currentMode === 'text') {
+                e.preventDefault();
+                let textEl = null;
+                let node = e.target;
+                while (node && node.tagName && node.tagName.toLowerCase() !== 'svg') {
+                    if (node.classList && node.classList.contains('text-item')) { textEl = node; break; }
+                    node = node.parentNode;
+                }
+                if (textEl) {
+                    openTextEditor({ elementId: textEl.id, initialText: getStoredText(textEl) });
+                    return;
+                }
+                addTextLabel(pt.x, pt.y);
+                return;
+            }
+
+            e.preventDefault();
+            if (e.pointerId !== undefined) activePointerId = e.pointerId;
+            isDrawing = true; drawStartPt = pt;
+
+            if (currentMode === 'road' || (currentMode === 'shape' && isRoadShapeType(currentShapeType))) {
+                invalidateShapeAnchorCache();
+            }
+
+            if (currentMode === 'pen' || currentMode === 'highlighter') freehandPoints = [pt];
+            else if (currentMode === 'road') roadPoints = [pt];
+            else if (currentMode === 'lasso') { lassoPoints = [pt]; clearSelection(); }
+            updateTempShape(pt);
+        }
+
+        function onCanvasMove(e) {
+            if (e.pointerId !== undefined && activePointers.has(e.pointerId)) {
+                activePointers.set(e.pointerId, getClientPoint(e));
+            }
+
+            if (pinchState && activePointers.size >= 2) {
+                e.preventDefault();
+                updatePinch();
+                return;
+            }
+
+            if (!isDrawing) return;
+            if (e.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) return;
+            e.preventDefault();
+            if (currentMode === 'eraser') { eraseAtEvent(e); return; }
+            const pt = getSvgCoordinates(e);
+            if (currentMode === 'pen' || currentMode === 'highlighter') freehandPoints.push(pt);
+            else if (currentMode === 'road') roadPoints.push(pt);
+            else if (currentMode === 'lasso') lassoPoints.push(pt);
+            updateTempShape(pt);
+        }
+
+        function onCanvasUp(e) {
+            if (e.pointerId !== undefined) {
+                activePointers.delete(e.pointerId);
+                if (activePointers.size < 2 && pinchState) endPinch();
+            }
+            if (!isDrawing) return;
+            if (e.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) return;
+            activePointerId = null;
+            isDrawing = false;
+            const pt = getSvgCoordinates(e);
+
+            if (currentMode === 'eraser') {
+                lastErasePt = null;
+                finalizeEraserStroke();
+            }
+            else if (currentMode === 'pen' || currentMode === 'highlighter') {
+                const lastPt = freehandPoints[freehandPoints.length - 1];
+                if (!lastPt || Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) > 0.5) freehandPoints.push(pt);
+                if (freehandPoints.length > 2) commitFreehand();
+            }
+            else if (currentMode === 'road') {
+                const lastPt = roadPoints[roadPoints.length - 1];
+                if (!lastPt || Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) > 0.5) roadPoints.push(pt);
+                if (roadPoints.length > 2) commitRoad();
+            }
+            else if (currentMode === 'lasso') {
+                const lastPt = lassoPoints[lassoPoints.length - 1];
+                if (!lastPt || Math.hypot(pt.x - lastPt.x, pt.y - lastPt.y) > 0.5) lassoPoints.push(pt);
+                if (lassoPoints.length > 3) finalizeLasso();
+            }
+            else if (currentMode === 'shape') {
+                const d = Math.hypot(pt.x - drawStartPt.x, pt.y - drawStartPt.y);
+                if (d > 5) commitShape(pt);
+            }
+
+            document.getElementById('tempDrawLayer').innerHTML = '';
+            freehandPoints = []; lassoPoints = []; roadPoints = [];
+        }
+
+        function updateTempShape(pt) {
+            const layer = document.getElementById('tempDrawLayer');
+            layer.innerHTML = '';
+            if (currentMode === 'pen' || currentMode === 'highlighter') {
+                if (freehandPoints.length < 2) return;
+                const p = document.createElementNS(SVG_NS, 'path');
+                p.setAttribute('d', smoothPath(freehandPoints));
+                p.setAttribute('fill', 'none'); p.setAttribute('stroke', drawColor);
+                p.setAttribute('stroke-width', getEffectiveWidth());
+                p.setAttribute('stroke-opacity', (getEffectiveOpacity() * 0.7).toFixed(2));
+                p.setAttribute('stroke-linecap', getEffectiveCap());
+                p.setAttribute('stroke-linejoin', 'round');
+                p.setAttribute('pointer-events', 'none');
+                layer.appendChild(p); return;
+            }
+            if (currentMode === 'road') {
+                if (roadPoints.length >= 1) {
+                    const startSnap = findSnapPoint(roadPoints[0]);
+                    if (startSnap) drawSnapIndicator(layer, startSnap, roadPoints[0], false);
+                }
+
+                const d = buildRoadPath(roadPoints);
+                if (!d) return;
+                const rw = getRoadWidth();
+                const g = document.createElementNS(SVG_NS, 'g');
+                g.setAttribute('opacity', '0.85');
+                g.setAttribute('pointer-events', 'none');
+                g.innerHTML = roadPathMarkup(d, rw);
+                layer.appendChild(g);
+
+                if (roadPoints.length >= 2) {
+                    const lastPt = roadPoints[roadPoints.length - 1];
+                    const endSnap = findSnapPoint(lastPt);
+                    if (endSnap) drawSnapIndicator(layer, endSnap, lastPt, true);
+                }
+                return;
+            }
+            if (currentMode === 'lasso') {
+                if (lassoPoints.length < 2) return;
+                const d = lassoPoints.map((p, i) => (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' ') + ' Z';
+                const p = document.createElementNS(SVG_NS, 'path');
+                p.setAttribute('d', d); p.setAttribute('fill', 'rgba(37,99,235,0.08)');
+                p.setAttribute('stroke', '#2563eb'); p.setAttribute('stroke-width', '1.5'); p.setAttribute('stroke-dasharray', '5,4');
+                p.setAttribute('pointer-events', 'none');
+                layer.appendChild(p); return;
+            }
+            if (currentMode === 'shape') {
+                if (isRoadShapeType(currentShapeType)) {
+                    const startSnap = findSnapPoint(drawStartPt);
+                    if (startSnap) drawSnapIndicator(layer, startSnap, drawStartPt, false);
+
+                    const endSnap = findSnapPoint(pt);
+                    if (endSnap) drawSnapIndicator(layer, endSnap, pt, true);
+                }
+
+                const g = document.createElementNS(SVG_NS, 'g');
+                g.setAttribute('stroke-dasharray', '6,4'); g.setAttribute('opacity', '0.75');
+                g.setAttribute('pointer-events', 'none');
+                g.innerHTML = shapeMarkup(currentShapeType, Math.round(drawStartPt.x), Math.round(drawStartPt.y), Math.round(pt.x), Math.round(pt.y), true);
+                layer.appendChild(g);
+            }
+        }
+
+        function newDrawnGroup(id, isText) {
+            const g = document.createElementNS(SVG_NS, 'g');
+            g.setAttribute('id', id);
+            g.setAttribute('class', 'draggable-element drawn-item' + (isText ? ' text-item' : ''));
+            g.setAttribute('transform', 'translate(0,0)');
+            if (isText) {
+                g.addEventListener('dblclick', function (ev) {
+                    ev.preventDefault(); ev.stopPropagation();
+                    openTextEditor({ elementId: id, initialText: getStoredText(g) });
+                });
+            }
+            return g;
+        }
+
+        function registerDrawn(group) {
+            const batch = prepareForNewDraw();
+            batch.contentGroup.appendChild(group);
+            setupDraggable(group);
+            drawnElementsHistory.push({ type: 'add', id: group.id, node: group, parent: batch.contentGroup });
+            redoStack = [];
+            updateUndoButtons();
+            invalidateShapeAnchorCache();
+            scheduleAutoSave();
+        }
+
+        function commitFreehand() {
+            if (shapeRecognitionEnabled && currentMode === 'pen') {
+                const recognized = recognizeShape(freehandPoints);
+                if (recognized) { drawPerfectShape(recognized); return; }
+            }
+            drawnElementIdCounter++;
+            const id = 'drawn_elem_' + drawnElementIdCounter;
+            const g = newDrawnGroup(id);
+            const d = smoothPath(freehandPoints);
+            const ps = `<path d="${d}" fill="none" stroke="${drawColor}" stroke-width="${getEffectiveWidth()}" stroke-opacity="${getEffectiveOpacity().toFixed(2)}" stroke-linecap="${getEffectiveCap()}" stroke-linejoin="round"/>`;
+            const hs = `<path d="${d}" fill="none" stroke="transparent" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" pointer-events="all"/>`;
+            g.innerHTML = ps + hs;
+            registerDrawn(g);
+        }
+
+        function commitRoad() {
+            if (roadPoints.length < 2) return;
+
+            let snappedStart = null, snappedEnd = null;
+
+            if (roadSnapEnabled) {
+                for (let i = roadPoints.length - 1; i >= Math.max(0, roadPoints.length - 5); i--) {
+                    const s = findSnapPoint(roadPoints[i]);
+                    if (s) {
+                        snappedEnd = s;
+                        if (i < roadPoints.length - 1) roadPoints.length = i + 1;
+                        break;
+                    }
+                }
+                for (let i = 0; i < Math.min(5, roadPoints.length); i++) {
+                    const s = findSnapPoint(roadPoints[i]);
+                    if (s) {
+                        snappedStart = s;
+                        if (i > 0) roadPoints.splice(0, i);
+                        break;
+                    }
+                }
+                if (snappedStart) roadPoints[0] = { x: snappedStart.x, y: snappedStart.y };
+                if (snappedEnd) roadPoints[roadPoints.length - 1] = { x: snappedEnd.x, y: snappedEnd.y };
+            }
+
+            if (roadPoints.length < 2) return;
+
+            const d = buildRoadPath(roadPoints);
+            if (!d) return;
+            drawnElementIdCounter++;
+            const id = 'drawn_elem_' + drawnElementIdCounter;
+            const g = newDrawnGroup(id);
+            const rw = getRoadWidth();
+            const roadSvg = roadPathMarkup(d, rw);
+            const hitSvg = `<path d="${d}" fill="none" stroke="transparent" stroke-width="${rw + 12}" stroke-linecap="round" stroke-linejoin="round" pointer-events="all"/>`;
+            g.innerHTML = roadSvg + hitSvg;
+
+            const startPt = roadPoints[0];
+            const endPt = roadPoints[roadPoints.length - 1];
+            g.setAttribute('data-road-start-x', startPt.x.toFixed(2));
+            g.setAttribute('data-road-start-y', startPt.y.toFixed(2));
+            g.setAttribute('data-road-end-x', endPt.x.toFixed(2));
+            g.setAttribute('data-road-end-y', endPt.y.toFixed(2));
+
+            registerDrawn(g);
+
+            if (snappedStart || snappedEnd) {
+                showShapeToast('വഴി ചേർത്തു ✓');
+            } else {
+                showShapeToast('വഴി വരച്ചു ✓');
+            }
+        }
+
+        function commitShape(endPt) {
+            let x1 = Math.round(drawStartPt.x), y1 = Math.round(drawStartPt.y);
+            let x2 = Math.round(endPt.x), y2 = Math.round(endPt.y);
+
+            let snappedStart = null, snappedEnd = null;
+            if (isRoadShapeType(currentShapeType) && roadSnapEnabled) {
+                snappedStart = findSnapPoint({ x: x1, y: y1 });
+                snappedEnd = findSnapPoint({ x: x2, y: y2 });
+                if (snappedStart) { x1 = Math.round(snappedStart.x); y1 = Math.round(snappedStart.y); }
+                if (snappedEnd) { x2 = Math.round(snappedEnd.x); y2 = Math.round(snappedEnd.y); }
+            }
+
+            drawnElementIdCounter++;
+            const id = 'drawn_elem_' + drawnElementIdCounter;
+            const g = newDrawnGroup(id);
+            const ss = shapeMarkup(currentShapeType, x1, y1, x2, y2, false);
+            g.innerHTML = ss + getHitAreaMarkup(ss);
+
+            if (isRoadShapeType(currentShapeType)) {
+                g.setAttribute('data-road-start-x', x1.toFixed(2));
+                g.setAttribute('data-road-start-y', y1.toFixed(2));
+                g.setAttribute('data-road-end-x', x2.toFixed(2));
+                g.setAttribute('data-road-end-y', y2.toFixed(2));
+            }
+
+            registerDrawn(g);
+
+            if (snappedStart || snappedEnd) {
+                showToast('✨ ചേർത്തു ✓');
+            }
+        }
+
+        function escapeXml(s) { return String(s).replace(/[<>&"']/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[ch])); }
+
+        function buildTextSvg(txt, fontSize, color) {
+            const lines = String(txt).replace(/\r\n?/g, '\n').split('\n');
+            const lh = fontSize * 1.30;
+            const startY = -((lines.length - 1) * lh) / 2;
+            let inner = '';
+            for (let i = 0; i < lines.length; i++) {
+                const y = startY + i * lh;
+                const content = lines[i].length ? escapeXml(lines[i]) : ' ';
+                inner += `<tspan x="0" y="${y.toFixed(2)}">${content}</tspan>`;
+            }
+            return `<text x="0" y="0" font-size="${fontSize}" fill="${color}" text-anchor="middle" ` +
+                   `dominant-baseline="middle" xml:space="preserve" style="white-space:pre;user-select:none">${inner}</text>`;
+        }
+
+        function getStoredText(g) {
+            if (!g) return '';
+            const raw = g.getAttribute('data-text');
+            if (raw === null) return '';
+            try { return decodeURIComponent(raw); } catch (err) { return raw; }
+        }
+
+        function refreshTextHitArea(g) {
+            if (!g) return;
+            const old = g.querySelector('.text-hit');
+            if (old && old.parentNode) old.parentNode.removeChild(old);
+            const t = g.querySelector('text');
+            if (!t) return;
+            let bb;
+            try { bb = t.getBBox(); } catch (err) { return; }
+            const pad = 8;
+            const rect = document.createElementNS(SVG_NS, 'rect');
+            rect.setAttribute('class', 'text-hit');
+            rect.setAttribute('x', (bb.x - pad).toFixed(2));
+            rect.setAttribute('y', (bb.y - pad).toFixed(2));
+            rect.setAttribute('width', Math.max(bb.width + pad * 2, 24).toFixed(2));
+            rect.setAttribute('height', Math.max(bb.height + pad * 2, 24).toFixed(2));
+            rect.setAttribute('fill', 'transparent');
+            rect.setAttribute('pointer-events', 'all');
+            g.insertBefore(rect, g.firstChild);
+        }
+
+        function createTextElement(x, y, txt) {
+            drawnElementIdCounter++;
+            const id = 'drawn_elem_' + drawnElementIdCounter;
+            const g = newDrawnGroup(id, true);
+            g.setAttribute('transform', `translate(${Math.round(x)}, ${Math.round(y)})`);
+            const fontSize = Math.max(11, drawSize * 4 + 8);
+            g.setAttribute('data-font-size', fontSize);
+            g.setAttribute('data-fill-color', drawColor);
+            g.setAttribute('data-text', encodeURIComponent(txt));
+            g.innerHTML = buildTextSvg(txt, fontSize, drawColor);
+            registerDrawn(g);
+            refreshTextHitArea(g);
+            showToast('🅰️ എഴുത്ത് ചേർത്തു ✓');
+        }
+
+        function updateTextElement(id, txt) {
+            const g = document.getElementById(id);
+            if (!g) return;
+            const fontSize = parseFloat(g.getAttribute('data-font-size')) || 16;
+            const color = g.getAttribute('data-fill-color') || '#0f172a';
+            g.innerHTML = buildTextSvg(txt, fontSize, color);
+            g.setAttribute('data-text', encodeURIComponent(txt));
+            refreshTextHitArea(g);
+            if (lassoSelection.indexOf(g) !== -1) renderSelectionOverlay();
+            scheduleAutoSave();
+        }
+
+        function addTextLabel(x, y) {
+            openTextEditor({ x: x, y: y, initialText: '' });
+        }
+
+        function openTextEditor(opts) {
+            const now = Date.now();
+            if (now - lastTextEditOpen < 250) return;
+            lastTextEditOpen = now;
+
+            const overlay = document.getElementById('textEditorOverlay');
+            const input = document.getElementById('textEditorInput');
+            const delBtn = document.getElementById('textEditorDelete');
+            const okBtn = document.getElementById('textEditorOk');
+            if (!overlay || !input) return;
+
+            textEditState = { x: opts.x, y: opts.y, elementId: opts.elementId || null };
+            input.value = opts.initialText || '';
+            delBtn.style.display = opts.elementId ? 'block' : 'none';
+            okBtn.textContent = opts.elementId ? 'സേവ് ചെയ്യുക' : 'ചേർക്കുക';
+            overlay.classList.add('show');
+
+            setTimeout(function () {
+                try {
+                    input.focus();
+                    const len = input.value.length;
+                    input.setSelectionRange(len, len);
+                } catch (err) { }
+            }, 40);
+        }
+
+        function closeTextEditor() {
+            const overlay = document.getElementById('textEditorOverlay');
+            if (overlay) overlay.classList.remove('show');
+            textEditState = null;
+        }
+
+        function confirmTextEditor() {
+            if (!textEditState) { closeTextEditor(); return; }
+            const input = document.getElementById('textEditorInput');
+            const txt = input ? input.value : '';
+            if (!txt || !txt.trim()) { closeTextEditor(); return; }
+            if (textEditState.elementId) updateTextElement(textEditState.elementId, txt);
+            else createTextElement(textEditState.x, textEditState.y, txt);
+            closeTextEditor();
+        }
+
+        function deleteTextFromEditor() {
+            if (textEditState && textEditState.elementId) removeDrawnElement(textEditState.elementId);
+            closeTextEditor();
+        }
+
+        function editSelectedText() {
+            const el = lassoSelection.find(function (x) { return x.classList && x.classList.contains('text-item'); });
+            if (!el) {
+                showToast('⚠️ ആദ്യം ഒരു ടെക്സ്റ്റ് സെലക്ട് ചെയ്യുക');
+                return;
+            }
+            openTextEditor({ elementId: el.id, initialText: getStoredText(el) });
+        }
+
+        function initTextEditorUI() {
+            const overlay = document.getElementById('textEditorOverlay');
+            const input = document.getElementById('textEditorInput');
+            const okBtn = document.getElementById('textEditorOk');
+            const cancelBtn = document.getElementById('textEditorCancel');
+            const delBtn = document.getElementById('textEditorDelete');
+            if (!overlay || !input) return;
+
+            okBtn.addEventListener('click', confirmTextEditor);
+            cancelBtn.addEventListener('click', closeTextEditor);
+            delBtn.addEventListener('click', deleteTextFromEditor);
+
+            overlay.addEventListener('pointerdown', function (e) {
+                if (e.target === overlay) closeTextEditor();
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    confirmTextEditor();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeTextEditor();
+                }
+                e.stopPropagation();
+            });
+            input.addEventListener('keyup', function (e) { e.stopPropagation(); });
+        }
+
+        function eraseAtEvent(e) {
+            const c = getClientPoint(e);
+            if (currentEraserType === 'area') applyAreaErase(c.x, c.y);
+            else tryEraseAt(c.x, c.y);
+        }
+
+        function applyAreaErase(cx, cy) {
+            const svg = document.getElementById('sketchSvg');
+            const ctm = svg.getScreenCTM();
+            if (!ctm) return;
+            const pt = svg.createSVGPoint();
+            pt.x = cx; pt.y = cy;
+            const sp = pt.matrixTransform(ctm.inverse());
+            const r = Math.max(6, drawSize * 1.2);
+
+            if (lastErasePt) {
+                const dx = sp.x - lastErasePt.x, dy = sp.y - lastErasePt.y;
+                if (Math.hypot(dx, dy) > 0.5) {
+                    addEraserMarkToAllBatches(() => {
+                        const line = document.createElementNS(SVG_NS, 'line');
+                        line.setAttribute('x1', lastErasePt.x.toFixed(1));
+                        line.setAttribute('y1', lastErasePt.y.toFixed(1));
+                        line.setAttribute('x2', sp.x.toFixed(1));
+                        line.setAttribute('y2', sp.y.toFixed(1));
+                        line.setAttribute('stroke', 'black');
+                        line.setAttribute('stroke-width', (r * 2).toFixed(1));
+                        line.setAttribute('stroke-linecap', 'round');
+                        line.setAttribute('pointer-events', 'none');
+                        return line;
+                    });
+                }
+            }
+            addEraserMarkToAllBatches(() => {
+                const mark = document.createElementNS(SVG_NS, 'circle');
+                mark.setAttribute('cx', sp.x.toFixed(1));
+                mark.setAttribute('cy', sp.y.toFixed(1));
+                mark.setAttribute('r', r);
+                mark.setAttribute('fill', 'black');
+                mark.setAttribute('pointer-events', 'none');
+                return mark;
+            });
+            lastErasePt = { x: sp.x, y: sp.y };
+        }
+
+        function tryEraseAt(cx, cy) {
+            const el = document.elementFromPoint(cx, cy);
+            if (!el) return false;
+            let node = el;
+            while (node && node.tagName && node.tagName.toLowerCase() !== 'svg') {
+                if (node.classList && (node.classList.contains('drawn-item') || node.classList.contains('landmark-item'))) {
+                    const removed = eraseRemoveElement(node);
+                    if (removed && eraserStrokeRemoved) eraserStrokeRemoved.push(removed);
+                    renderSelectionOverlay();
+                    return true;
+                }
+                node = node.parentNode;
+            }
+            return false;
+        }
+
+        function clearEraserMarks() {
+            allBatchMarksGroups.forEach(mg => { mg.innerHTML = ''; });
+            lastErasePt = null;
+            pendingErase = false;
+            drawnElementsHistory = drawnElementsHistory.filter(i => i.type !== 'erase-marks');
+            redoStack = redoStack.filter(i => i.type !== 'erase-marks');
+            updateUndoButtons();
+            scheduleAutoSave();
+        }
+
+        function finalizeLasso() {
+            if (lassoPoints.length < 3) return;
+            const items = document.querySelectorAll('#userDrawnLayer .drawn-item, #landmarksLayer .landmark-item');
+            const found = [];
+            items.forEach(el => { if (pointInPolygon(getElementCenter(el), lassoPoints)) found.push(el); });
+            setSelection(found);
+            if (found.length > 0) setMode('select');
+        }
+
+        function pointInPolygon(pt, poly) {
+            let inside = false;
+            for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
+                const inter = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+                if (inter) inside = !inside;
+            }
+            return inside;
+        }
+
+        function getElementCenter(el) {
+            try { const l = getElementLocalCenter(el); const d = getElementTransform(el); return { x: l.cx + d.tx, y: l.cy + d.ty }; }
+            catch (err) { return { x: 0, y: 0 }; }
+        }
+
+        function updateUndoButtons() {
+            const u = document.getElementById('btnUndo'), r = document.getElementById('btnRedo');
+            if (u) u.disabled = drawnElementsHistory.length === 0;
+            if (r) r.disabled = redoStack.length === 0;
+        }
+
+        function undoDraw() {
+            const item = drawnElementsHistory.pop();
+            if (!item) return;
+            if (item.type === 'transform') {
+                item.changes.forEach(c => { if (c.el && c.el.parentNode) c.el.setAttribute('transform', c.before); });
+                redoStack.push(item);
+                if (lassoSelection.length > 0) renderSelectionOverlay();
+            } else if (item.type === 'erase-elements') {
+                item.items.forEach(it => {
+                    if (it.parent) {
+                        if (it.nextSibling && it.nextSibling.parentNode === it.parent) {
+                            it.parent.insertBefore(it.node, it.nextSibling);
+                        } else {
+                            it.parent.appendChild(it.node);
+                        }
+                    }
+                });
+                redoStack.push(item);
+                renderSelectionOverlay();
+            } else if (item.type === 'erase-marks') {
+                item.marks.forEach(m => {
+                    if (m.node && m.node.parentNode) m.node.parentNode.removeChild(m.node);
+                });
+                redoStack.push(item);
+            } else {
+                if (item.node) item.node.remove();
+                redoStack.push(item);
+                if (selectedElement === item.node) clearSelection();
+                lassoSelection = lassoSelection.filter(x => x !== item.node);
+                renderSelectionOverlay();
+            }
+            invalidateShapeAnchorCache();
+            updateUndoButtons();
+            scheduleAutoSave();
+        }
+
+        function redoDraw() {
+            const item = redoStack.pop();
+            if (!item) return;
+            if (item.type === 'transform') {
+                item.changes.forEach(c => { if (c.el && c.el.parentNode) c.el.setAttribute('transform', c.after); });
+                if (lassoSelection.length > 0) renderSelectionOverlay();
+            } else if (item.type === 'erase-elements') {
+                item.items.forEach(it => {
+                    if (it.node && it.node.parentNode) it.node.parentNode.removeChild(it.node);
+                });
+            } else if (item.type === 'erase-marks') {
+                item.marks.forEach(m => {
+                    if (m.parent) m.parent.appendChild(m.node);
+                });
+            } else {
+                if (item.parent && item.node) item.parent.appendChild(item.node);
+            }
+            invalidateShapeAnchorCache();
+            drawnElementsHistory.push(item);
+            updateUndoButtons();
+            scheduleAutoSave();
+        }
+
+        function removeDrawnElement(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            lassoSelection = lassoSelection.filter(x => x !== el);
+            if (selectedElement === el) selectedElement = null;
+            el.remove();
+            drawnElementsHistory = drawnElementsHistory.filter(i => {
+                if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+                if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
+                return i.id !== id;
+            });
+            redoStack = redoStack.filter(i => {
+                if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+                if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
+                return i.id !== id;
+            });
+            invalidateShapeAnchorCache();
+            renderSelectionOverlay();
+            updateUndoButtons();
+            scheduleAutoSave();
+        }
+
+        function clearUserDrawn() {
+            document.getElementById('tempDrawLayer').innerHTML = '';
+            document.getElementById('userDrawnLayer').innerHTML = '';
+            document.getElementById('landmarksLayer').innerHTML = '';
+            document.getElementById('svgDefs').innerHTML = '';
+            batchCounter = 0;
+            currentBatch = null;
+            allBatchMarksGroups = [];
+            pendingErase = false;
+            drawnElementsHistory = [];
+            redoStack = [];
+            lastErasePt = null;
+            transformStartSnapshots = null;
+            eraserStrokeMarks = null;
+            eraserStrokeRemoved = null;
+            previousToolBeforeLongPress = null;
+            longPressMoveState = null;
+            invalidateShapeAnchorCache();
+            clearSelection();
+            updateUndoButtons();
+            scheduleAutoSave();
+        }
+
+        function deleteSelected() {
+            if (lassoSelection.length > 0) {
+                const ids = lassoSelection.map(el => el.id).filter(Boolean);
+                ids.forEach(id => { if (id.startsWith('drawn_elem_')) removeDrawnElement(id); else if (id.startsWith('lm_')) removeLandmark(id); });
+                clearSelection();
+            }
+        }
+
+        function rotateSelected(delta) {
+            if (lassoSelection.length === 0) return;
+            const before = snapshotTransforms(lassoSelection);
+            const bb = getSelectionBBox();
+            const scx = bb.x + bb.width / 2, scy = bb.y + bb.height / 2;
+            const rad = delta * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
+            lassoSelection.forEach(el => {
+                const d = getElementTransform(el);
+                const l = getElementLocalCenter(el);
+                const dx = d.tx + l.cx - scx, dy = d.ty + l.cy - scy;
+                const nwx = scx + dx * cos - dy * sin, nwy = scy + dx * sin + dy * cos;
+                applyElementTransformCached(el, nwx - l.cx, nwy - l.cy, d.angle + delta, d.sx, d.sy, l.cx, l.cy);
+            });
+            pushTransformHistory(before);
+            renderSelectionOverlay();
+        }
+
+        function resetRotation() {
+            if (lassoSelection.length === 0) return;
+            const before = snapshotTransforms(lassoSelection);
+            lassoSelection.forEach(el => {
+                const d = getElementTransform(el);
+                const l = getElementLocalCenter(el);
+                applyElementTransformCached(el, d.tx, d.ty, 0, d.sx, d.sy, l.cx, l.cy);
+            });
+            pushTransformHistory(before);
+            renderSelectionOverlay();
+        }
+
+        function renderPolygon() {
+            const ps = plotPoints.map(p => `${p.x},${p.y}`).join(' ');
+            document.getElementById('plotPolygon').setAttribute('points', ps);
+            const hg = document.getElementById('handlesGroup');
+            hg.innerHTML = '';
+            plotPoints.forEach((p, i) => {
+                const c = document.createElementNS(SVG_NS, 'circle');
+                c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', '7');
+                c.setAttribute('fill', '#2563eb'); c.setAttribute('stroke', '#fff'); c.setAttribute('stroke-width', '2');
+                c.setAttribute('class', 'handle'); c.setAttribute('data-index', i);
+                c.addEventListener('pointerdown', (e) => startHandleDrag(e, i));
+                hg.appendChild(c);
+            });
+        }
+
+        function startHandleDrag(e, i) {
+            if (currentMode !== 'select') return;
+            if (!isLeftMouseButton(e)) return;
+            e.preventDefault(); e.stopPropagation();
+            activeHandleIndex = i;
+            document.addEventListener('pointermove', onDragHandle);
+            document.addEventListener('pointerup', stopDragHandle);
+            document.addEventListener('pointercancel', stopDragHandle);
+        }
+
+        function onDragHandle(e) {
+            if (activeHandleIndex === null) return;
+            e.preventDefault();
+            const pt = getSvgCoordinates(e);
+            plotPoints[activeHandleIndex].x = Math.round(pt.x);
+            plotPoints[activeHandleIndex].y = Math.round(pt.y);
+            renderPolygon();
+        }
+
+        function stopDragHandle() {
+            activeHandleIndex = null;
+            document.removeEventListener('pointermove', onDragHandle);
+            document.removeEventListener('pointerup', stopDragHandle);
+            document.removeEventListener('pointercancel', stopDragHandle);
+        }
+
+        function addPlotVertex() {
+            if (plotPoints.length === 0) plotPoints.push({ x: 180, y: 180 });
+            else if (plotPoints.length === 1) plotPoints.push({ x: 380, y: 200 });
+            else {
+                const p1 = plotPoints[0], p2 = plotPoints[1];
+                plotPoints.splice(1, 0, { x: Math.round((p1.x + p2.x) / 2), y: Math.round((p1.y + p2.y) / 2) + 20 });
+            }
+            renderPolygon();
+        }
+
+        function resetPlotVertices() { plotPoints = DEFAULT_PLOT_POINTS.map(p => ({ x: p.x, y: p.y })); renderPolygon(); }
+
+        function setupDraggable(element) {
+            function startDrag(e) {
+                if (currentMode !== 'select') return;
+                if (!isLeftMouseButton(e)) return;
+                if (e.target.closest && (e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle'))) return;
+
+                const isText = element.classList && element.classList.contains('text-item');
+                const pt = getSvgCoordinates(e);
+
+                if (isText) {
+                    const now = Date.now();
+                    if (lastTap.id === element.id && (now - lastTap.time) < 500) {
+                        lastTap = { id: null, time: 0 };
+                        if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; longPressElement = null; }
+                        e.preventDefault(); e.stopPropagation();
+                        openTextEditor({ elementId: element.id, initialText: getStoredText(element) });
+                        return;
+                    }
+                    lastTap = { id: element.id, time: now };
+                }
+
+                if (lassoSelection.length > 0 && isPointInSelection(pt)) {
+                    e.preventDefault(); e.stopPropagation();
+                    startSelectionMove(e);
+                    return;
+                }
+
+                e.preventDefault(); e.stopPropagation();
+                if (!lassoSelection.includes(element)) setSelection([element]);
+                transformStartSnapshots = snapshotTransforms(lassoSelection);
+                activeElement = element;
+                dragStartPt = { x: pt.x, y: pt.y };
+                dragStartTransforms = new Map();
+                lassoSelection.forEach(el => {
+                    const d = getElementTransform(el);
+                    const l = getElementLocalCenter(el);
+                    dragStartTransforms.set(el, { tx: d.tx, ty: d.ty, angle: d.angle, sx: d.sx, sy: d.sy, cx: l.cx, cy: l.cy });
+                });
+                const d = getElementTransform(element);
+                dragOffset.x = pt.x - d.tx; dragOffset.y = pt.y - d.ty;
+                document.addEventListener('pointermove', onElemDrag);
+                document.addEventListener('pointerup', stopElemDrag);
+                document.addEventListener('pointercancel', stopElemDrag);
+            }
+            element.addEventListener('pointerdown', startDrag);
+        }
+
+        function onElemDrag(e) {
+            if (!activeElement) return;
+            e.preventDefault();
+            const pt = getSvgCoordinates(e);
+            if (lassoSelection.includes(activeElement) && lassoSelection.length > 0) {
+                const dx = pt.x - dragStartPt.x, dy = pt.y - dragStartPt.y;
+                lassoSelection.forEach(el => {
+                    const c = dragStartTransforms.get(el);
+                    if (c) applyElementTransformCached(el, c.tx + dx, c.ty + dy, c.angle, c.sx, c.sy, c.cx, c.cy);
+                });
+                const bb = getSelectionBBox();
+                if (bb) updateOverlayPositions(bb);
+            } else {
+                const nx = pt.x - dragOffset.x, ny = pt.y - dragOffset.y;
+                const d = getElementTransform(activeElement);
+                const l = getElementLocalCenter(activeElement);
+                applyElementTransformCached(activeElement, nx, ny, d.angle, d.sx, d.sy, l.cx, l.cy);
+            }
+        }
+
+        function stopElemDrag() {
+            if (transformStartSnapshots) {
+                pushTransformHistory(transformStartSnapshots);
+                transformStartSnapshots = null;
+            }
+            activeElement = null;
+            dragStartTransforms = new Map();
+            document.removeEventListener('pointermove', onElemDrag);
+            document.removeEventListener('pointerup', stopElemDrag);
+            document.removeEventListener('pointercancel', stopElemDrag);
+        }
+
+        function addLandmark(type) {
+            landmarkCounter++;
+            const id = `lm_${type}_${landmarkCounter}`;
+            const g = document.createElementNS(SVG_NS, 'g');
+            g.setAttribute('class', 'draggable-element landmark-item');
+            g.setAttribute('id', id);
+            g.setAttribute('transform', 'translate(270, 290)');
+            if (type === 'well') g.innerHTML = `<circle cx="0" cy="0" r="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="2.5"/><text x="0" y="22" font-size="10" font-weight="bold" text-anchor="middle" fill="#0369a1">കിണർ</text><rect x="-20" y="-20" width="40" height="40" fill="transparent" pointer-events="all" />`;
+            else if (type === 'house') g.innerHTML = `<rect x="-12" y="-8" width="24" height="20" fill="#fef3c7" stroke="#d97706" stroke-width="1.8"/><polygon points="-15,-8 0,-20 15,-8" fill="#d97706"/><text x="0" y="24" font-size="10" font-weight="bold" text-anchor="middle" fill="#92400e">വീട്</text><rect x="-20" y="-25" width="40" height="50" fill="transparent" pointer-events="all" />`;
+            else if (type === 'tree') g.innerHTML = `<circle cx="0" cy="-6" r="10" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/><rect x="-2" y="4" width="4" height="10" fill="#854d0e"/><text x="0" y="24" font-size="10" font-weight="bold" text-anchor="middle" fill="#15803d">മരം</text><rect x="-20" y="-20" width="40" height="50" fill="transparent" pointer-events="all" />`;
+            else if (type === 'gate') g.innerHTML = `<rect x="-14" y="-4" width="28" height="8" fill="#f3e8ff" stroke="#7e22ce" stroke-width="2"/><line x1="-7" y1="-4" x2="-7" y2="4" stroke="#7e22ce" stroke-width="1.5"/><line x1="7" y1="-4" x2="7" y2="4" stroke="#7e22ce" stroke-width="1.5"/><text x="0" y="20" font-size="10" font-weight="bold" text-anchor="middle" fill="#6b21a8">ഗേറ്റ്</text><rect x="-20" y="-20" width="40" height="40" fill="transparent" pointer-events="all" />`;
+            document.getElementById('landmarksLayer').appendChild(g);
+            setupDraggable(g);
+            scheduleAutoSave();
+        }
+
+        function removeLandmark(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                lassoSelection = lassoSelection.filter(x => x !== el);
+                if (selectedElement === el) selectedElement = null;
+                el.remove();
+                drawnElementsHistory = drawnElementsHistory.filter(i => {
+                    if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+                    if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
+                    return true;
+                });
+                redoStack = redoStack.filter(i => {
+                    if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+                    if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
+                    return true;
+                });
+                renderSelectionOverlay();
+                updateUndoButtons();
+                scheduleAutoSave();
+            }
+        }
+
+        function changeRoadPosition() {
+            const pos = document.getElementById('selRoadPos').value;
+            const rg = document.getElementById('roadGroup');
+            const rb = document.getElementById('roadBg'), rf = document.getElementById('roadFg'), rc = document.getElementById('roadCenter');
+            const or = document.getElementById('outRoad');
+            if (pos === 'none') { rg.style.display = 'none'; rb.setAttribute('d', ''); rf.setAttribute('d', ''); rc.setAttribute('d', ''); or.textContent = ''; return; }
+            rg.style.display = '';
+            let pd = "", tx = 0, ty = 0;
+            if (pos === 'east') { pd = "M 440,520 L 440,340 Q 440,290 400,280 L 330,270"; tx = 430; ty = 400; }
+            else if (pos === 'south') { pd = "M 80,520 L 450,520"; tx = 260; ty = 540; }
+            else if (pos === 'west') { pd = "M 100,520 L 100,340 Q 100,290 140,280 L 200,270"; tx = 40; ty = 400; }
+            else if (pos === 'north') { pd = "M 80,60 L 450,60"; tx = 260; ty = 50; }
+            rb.setAttribute('d', pd); rf.setAttribute('d', pd); rc.setAttribute('d', pd);
+            or.setAttribute('x', tx); or.setAttribute('y', ty);
+            updateSketch();
+        }
+
+        document.addEventListener('keydown', function (e) {
+            const tag = (e.target.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redoDraw(); else undoDraw(); return; }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); selectAllElements(); return; }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveDraft(); return; }
+            if (e.key === 'Delete' || e.key === 'Backspace') { if (lassoSelection.length) { e.preventDefault(); deleteSelected(); } return; }
+            if (e.key === 'Escape') {
+                if (previousToolBeforeLongPress) {
+                    const restoreMode = previousToolBeforeLongPress;
+                    previousToolBeforeLongPress = null;
+                    clearSelection();
+                    setMode(restoreMode);
+                    showToast('🔄 ' + modeName(restoreMode) + ' ലേക്ക് തിരികെ');
+                } else {
+                    setMode('select');
+                    clearSelection();
+                }
+                return;
+            }
+            if (e.key === '[') { if (lassoSelection.length) { e.preventDefault(); rotateSelected(-15); } return; }
+            if (e.key === ']') { if (lassoSelection.length) { e.preventDefault(); rotateSelected(15); } return; }
+        });
+
+        function initApp() {
+            updateSketch();
+            renderPolygon();
+            initDrawingCanvas();
+            initTextEditorUI();
+            shapeRecognitionEnabled = true;
+            const autoBtn = document.getElementById('btnAutoShape');
+            if (autoBtn) { autoBtn.classList.add('active'); autoBtn.textContent = '✨ ഓട്ടോ ✓'; }
+            setMode('pen');
+            switchTab('tools');
+            updateUndoButtons();
+            changeRoadPosition();
+            refreshSizeSlider();
+
+            const snapBtn = document.getElementById('btnRoadSnap');
+            if (snapBtn) {
+                snapBtn.classList.toggle('active', roadSnapEnabled);
+                snapBtn.textContent = roadSnapEnabled ? '🔗 Snap ✓' : '🔗 Snap';
+            }
+
+            const dm = document.getElementById('draftsModalOverlay');
+            if (dm) dm.addEventListener('pointerdown', function (e) { if (e.target === dm) closeDraftsModal(); });
+
+            document.querySelectorAll('.draggable-element').forEach(el => setupDraggable(el));
+
+            /* ⭐⭐⭐ RESTORE AUTOSAVE on page load ⭐⭐⭐ */
+            const restored = tryRestoreAutosave();
+
+            /* ⭐ Watch for any layer changes → auto-save */
+            try {
+                const mo = new MutationObserver(function () {
+                    if (isRestoringFromDraft) return;
+                    scheduleAutoSave();
+                });
+                mo.observe(document.getElementById('userDrawnLayer'), { childList: true, subtree: true, attributes: true });
+                mo.observe(document.getElementById('landmarksLayer'), { childList: true, subtree: true, attributes: true });
+                mo.observe(document.getElementById('svgDefs'), { childList: true, subtree: true });
+            } catch (e) {}
+
+            /* ⭐ Auto-save form fields (debounced) */
+            document.querySelectorAll('input[type="text"], input[type="date"], select').forEach(el => {
+                el.addEventListener('input', scheduleAutoSave);
+                el.addEventListener('change', scheduleAutoSave);
+            });
+
+            /* ⭐ Force save on page unload (browser close / refresh) */
+            window.addEventListener('beforeunload', function () {
+                if (isRestoringFromDraft) return;
+                try {
+                    const data = serializeSketch('Autosave');
+                    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+                } catch (e) {}
+            });
+
+            /* ⭐ Also save on visibility change (mobile app switch) */
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden && !isRestoringFromDraft) {
+                    try {
+                        const data = serializeSketch('Autosave');
+                        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data));
+                    } catch (e) {}
+                }
+            });
+
+            if (!restored) {
+                /* Only on truly fresh start, show initial toast */
+                setTimeout(() => showToast('💾 Auto-save ON — വരയ്ക്കുമ്പോൾ തനിയെ save ആകും'), 600);
+            }
+        }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initApp);
+        else initApp();
+        window.addEventListener('load', function() {
+            if (!document.getElementById('sketchSvg').__initialized) {
+                document.getElementById('sketchSvg').__initialized = true;
+            }
+        });
+    </script>
+</body>
+</html>
