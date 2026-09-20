@@ -1,0 +1,13 @@
+{
+  "name": "വില്ലേജ് ലൊക്കേഷൻ സ്കെച്ച്",
+  "short_name": "വില്ലേജ് സ്കെച്ച്",
+  "description": "വില്ലേജ് ലൊക്കേഷൻ സ്കെച്ച് തയ്യാറാക്കാനുള്ള ആപ്പ്",
+  "start_url": "./w2.9.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
+  "lang": "ml",
+  "icons": []
+}
