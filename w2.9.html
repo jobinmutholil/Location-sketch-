@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>വില്ലേജ് ലൊക്കേഷൻ സ്കെച്ച്</title>
+
+<!-- ⭐ PWA Meta Tags ⭐ -->
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="വില്ലേജ് സ്കെച്ച്">
+<meta name="description" content="വില്ലേജ് ലൊക്കേഷൻ സ്കെച്ച് തയ്യാറാക്കാനുള്ള ആപ്പ്">
+
+<!-- ⭐ Manifest Link ⭐ -->
+<link rel="manifest" href="./manifest.json">
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-B5TGZ433LW"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -40,6 +52,9 @@ input, textarea, select { -webkit-user-select: text; user-select: text; }
 .lasso-selected { filter: drop-shadow(0 0 3px #2563eb); }
 .rotate-handle { cursor: grab; }
 .resize-handle { cursor: pointer; }
+.vertex-handle { cursor: pointer; }
+.edge-handle { cursor: pointer; }
+.tap-point-delete { cursor: pointer; }
 .tool-btn { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 8px 6px; border-radius: 9999px; font-weight: 600; font-size: 11px; border: 1px solid #e5e7eb; background: #f3f4f6; color: #1f2937; transition: all .15s; line-height: 1.15; cursor: pointer; touch-action: manipulation; }
 .tool-btn:hover { background: #e5e7eb; }
 .tool-btn.active { background: #2563eb; color: #fff; border-color: #1d4ed8; }
@@ -134,9 +149,29 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 .add-entry-btn { width: 100%; background: linear-gradient(135deg,#10b981,#059669); color: #fff; border: none; border-radius: 8px; padding: 9px 10px; font-size: 12px; font-weight: 700; cursor: pointer; margin-top: 4px; }
 .entries-empty-note { font-size: 11px; color: #9ca3af; font-style: italic; padding: 8px 4px; text-align: center; background: #f9fafb; border: 1px dashed #e5e7eb; border-radius: 8px; }
 .landmark-btn.active { box-shadow: 0 0 0 2px #2563eb, 0 0 0 4px rgba(37,99,235,.22) !important; background: #dbeafe !important; }
+
+.polygon-draw-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border: 1px solid #e5e7eb;
+}
 </style>
 </head>
 <body class="bg-gray-100 font-sans p-2 md:p-6 text-gray-800" oncontextmenu="return false;" ondragstart="return false;">
+
+<!-- ⭐ PWA Install Button ⭐ -->
+<button id="pwaInstallBtn" style="display:none; position:fixed; top:12px; right:12px; z-index:9999; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:9999px; padding:10px 18px; font-weight:700; font-size:13px; box-shadow:0 4px 16px rgba(16,185,129,.4); cursor:pointer; align-items:center; gap:6px; font-family:inherit;" onclick="installPWA()">
+<span>📲</span> App Install ചെയ്യുക
+</button>
 
 <div class="max-w-5xl mx-auto flex flex-col gap-1">
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
@@ -248,7 +283,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 
 <div class="card-block space-y-2">
 <div class="grid grid-cols-3 gap-1.5">
-<button type="button" id="mode_pen" onclick="setMode('pen')" class="tool-btn active">✏️ പേന</button>
+<button type="button" id="mode_pen" onclick="setMode('pen')" class="tool-btn active" title="പേന: വരയ്ക്കാനോ ടാപ്പ് ചെയ്ത് പോളിഗോൺ ഉണ്ടാക്കാനോ ഉപയോഗിക്കുക">✏️ പേന</button>
 <button type="button" id="btnQuickRect" onclick="quickRect()" class="tool-btn">▭ ചതുരം</button>
 <button type="button" id="mode_eraser" onclick="setMode('eraser')" class="tool-btn">🧽 ഇറേസർ</button>
 <button type="button" id="mode_shape" onclick="setMode('shape')" class="tool-btn">⬜ ഷേപ്പ്</button>
@@ -359,7 +394,8 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 </div>
 <p class="text-[10px] text-gray-500 leading-tight pt-1">
 💾 <b>Auto-Save:</b> Browser close ചെയ്താലും തിരികെ കിട്ടും.<br>
-🖱️ <b>Windows:</b> element-ൽ <b>double-click</b> ചെയ്താൽ select ആകും.
+🖱️ <b>Windows:</b> element-ൽ <b>double-click</b> ചെയ്താൽ select ആകും.<br>
+📐 <b>Double Tap:</b> ഒരു polygon/rect select ചെയ്ത ശേഷം double tap ചെയ്താൽ vertex edit mode ലേക്ക് മാറും.
 </p>
 </div>
 
@@ -409,6 +445,12 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 <span>🖨️</span> PDF ആയി സേവ് ചെയ്യുക / പ്രിന്റ്
 </button>
 </div>
+</div>
+
+<div id="polygonDrawControls" class="polygon-draw-controls" style="display:none;">
+    <button type="button" onclick="undoLastTap()" class="tool-btn text-sm py-2 px-4" style="border-radius: 8px; background: #f59e0b; color: white; border: none; font-weight: 700;">↶ Undo Last</button>
+    <button type="button" onclick="finalizeTapPolygon()" class="tool-btn btn-save text-sm py-2 px-4" style="border-radius: 8px;">✅ Finish Polygon</button>
+    <button type="button" onclick="cancelTapPolygon()" class="tool-btn btn-danger text-sm py-2 px-4" style="border-radius: 8px;">❌ Cancel</button>
 </div>
 
 <div id="shapeToast" class="shape-toast"><span id="toastContent"></span></div>
@@ -468,6 +510,58 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px;
 
 <script>
 /* ============================================================
+   PWA SETUP
+   ============================================================ */
+let deferredPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('SW registered:', registration.scope);
+      })
+      .catch(err => {
+        console.log('SW registration failed (normal if file://):', err);
+      });
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const btn = document.getElementById('pwaInstallBtn');
+  if (btn) btn.style.display = 'none';
+  try { showToast('✅ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്തു!'); } catch(e) {}
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        try { showToast('📲 ഇൻസ്റ്റാൾ ചെയ്യുന്നു...'); } catch(e) {}
+      }
+      deferredPrompt = null;
+      const btn = document.getElementById('pwaInstallBtn');
+      if (btn) btn.style.display = 'none';
+    });
+  } else {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      alert('📲 iOS-ൽ Install ചെയ്യാൻ:\n\n1. താഴെ Share ബട്ടൺ (⬆️) അമർത്തുക\n2. "Add to Home Screen" തിരഞ്ഞെടുക്കുക\n3. "Add" അമർത്തുക');
+    } else {
+      try { showToast('⚠️ ബ്രൗസർ മെനുവിൽ നിന്ന് "Install App" തിരഞ്ഞെടുക്കുക.'); } catch(e) {}
+    }
+  }
+}
+
+/* ============================================================
    GLOBAL STATE
    ============================================================ */
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -476,7 +570,6 @@ let viewBox = { x:0, y:0, w:BASE_W, h:BASE_H };
 const ZOOM_MAX_W = BASE_W * 1.0;
 const ZOOM_MIN_W = BASE_W * 0.20;
 
-/* ⭐ FIX 1: Detect Windows ⭐ */
 const IS_WINDOWS = /Windows|Win32|Win64|WOW64/i.test(navigator.userAgent || navigator.platform || '');
 
 let currentMode = 'pen';
@@ -494,7 +587,6 @@ let gridSnapEnabled = true;
 const GRID_SIZE = 20;
 let snapStateBeforeSelect = null;
 
-/* ⭐ FIX 3: landmark stays armed for multiple placements ⭐ */
 let pendingLandmarkType = null;
 
 let surveyEntries = [];
@@ -546,6 +638,15 @@ let transformStartSnapshots = null;
 let eraserStrokeMarks = null, eraserStrokeRemoved = null;
 let previousToolBeforeLongPress = null;
 let shapeAnchorCache = null;
+
+let isNodeEditMode = false;
+let vertexDragState = null;
+let snapStateBeforeNodeEdit = null;
+
+let tapPoints = [];
+let tapDrawStartTime = 0;
+let tapDrawStartPt = {x:0, y:0};
+let skipNextCanvasEvent = false;
 
 const AUTOSAVE_KEY = 'villageSketch_autosave_v1';
 const TEXT_PRESETS_KEY = 'villageSketch_textPresets_v1';
@@ -920,6 +1021,15 @@ function localToSvgUserCoords(g, localPt) {
   const worldPt = screenPt.matrixTransform(svg.getScreenCTM().inverse());
   return { x:worldPt.x, y:worldPt.y };
 }
+function svgUserToLocalCoords(g, worldPt) {
+  const svg = document.getElementById('sketchSvg');
+  if (!g.getScreenCTM || !svg.getScreenCTM()) return null;
+  const pt = svg.createSVGPoint();
+  pt.x = worldPt.x; pt.y = worldPt.y;
+  const screenPt = pt.matrixTransform(svg.getScreenCTM());
+  const localPt = screenPt.matrixTransform(g.getScreenCTM().inverse());
+  return { x: localPt.x, y: localPt.y };
+}
 function getAllRoadEndpoints() {
   const endpoints = [];
   document.querySelectorAll('#userDrawnLayer .drawn-item').forEach(g => {
@@ -1088,6 +1198,8 @@ function deserializeSketch(data) {
     lassoSelection = []; selectedElement = null;
     previousToolBeforeLongPress = null; longPressMoveState = null;
     snapStateBeforeSelect = null;
+    isNodeEditMode = false;
+    snapStateBeforeNodeEdit = null;
     cancelPendingLandmark();
     invalidateShapeAnchorCache();
 
@@ -1595,7 +1707,6 @@ function getShapeName(shape) {
   return shape.type;
 }
 
-/* ⭐ FIX 4: Closed shapes get WHITE fill ⭐ */
 function drawPerfectShape(shape) {
   drawnElementIdCounter++;
   const id = 'drawn_elem_' + drawnElementIdCounter;
@@ -1705,10 +1816,158 @@ function isPointInSelection(pt) {
   if (!bbox) return false;
   return pt.x >= bbox.x && pt.x <= bbox.x+bbox.width && pt.y >= bbox.y && pt.y <= bbox.y+bbox.height;
 }
+
+function canEditVertices(el) {
+  if (!el) return false;
+  if (el.querySelector('polygon')) return true;
+  if (el.querySelector('rect')) return true;
+  return false;
+}
+function convertRectToPolygonForEdit(el) {
+  const rect = el.querySelector('rect');
+  if (!rect) return false;
+  const x = parseFloat(rect.getAttribute('x')) || 0;
+  const y = parseFloat(rect.getAttribute('y')) || 0;
+  const w = parseFloat(rect.getAttribute('width')) || 0;
+  const h = parseFloat(rect.getAttribute('height')) || 0;
+  if (w <= 0 || h <= 0) return false;
+  const points = x+','+y+' '+(x+w)+','+y+' '+(x+w)+','+(y+h)+' '+x+','+(y+h);
+  const fill = rect.getAttribute('fill') || '#ffffff';
+  const stroke = rect.getAttribute('stroke') || '#000';
+  const sw = rect.getAttribute('stroke-width') || '2';
+  const so = rect.getAttribute('stroke-opacity');
+  const op = so ? ' stroke-opacity="'+so+'"' : '';
+  const polySvg = '<polygon points="'+points+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linejoin="round"'+op+'/>';
+  const hitSvg = '<polygon points="'+points+'" fill="transparent" stroke="transparent" stroke-width="25" pointer-events="all"/>';
+  el.innerHTML = polySvg + hitSvg;
+  invalidateShapeAnchorCache();
+  return true;
+}
+
+function toggleNodeEditMode(element) {
+  if (isNodeEditMode) {
+    if (snapStateBeforeNodeEdit) {
+      roadSnapEnabled = snapStateBeforeNodeEdit.road;
+      gridSnapEnabled = snapStateBeforeNodeEdit.grid;
+      snapStateBeforeNodeEdit = null;
+      updateSnapButton();
+    }
+    isNodeEditMode = false;
+    renderSelectionOverlay();
+    showToast('🔲 ബൗണ്ടിംഗ് ബോക്സ് മോഡ്');
+  } else {
+    if (!element.querySelector('polygon') && element.querySelector('rect')) {
+      convertRectToPolygonForEdit(element);
+    }
+    if (!element.querySelector('polygon')) return;
+
+    snapStateBeforeNodeEdit = { road: roadSnapEnabled, grid: gridSnapEnabled };
+    roadSnapEnabled = true;
+    gridSnapEnabled = true;
+    updateSnapButton();
+
+    isNodeEditMode = true;
+    renderSelectionOverlay();
+    showToast('✏️ വെർട്ടക്സ് എഡിറ്റ് മോഡ് (Snap ON)');
+  }
+}
+
+function renderVertexEditOverlay(el) {
+  const grp = document.getElementById('selectionOverlayGroup');
+  grp.innerHTML = '';
+
+  const poly = el.querySelector('polygon');
+  if (!poly) return;
+
+  const pointsStr = poly.getAttribute('points');
+  const nums = pointsStr.match(/-?[\d.]+/g);
+  if (!nums || nums.length < 6) return;
+
+  const pts = [];
+  for (let i = 0; i < nums.length; i += 2) {
+    pts.push({ x: parseFloat(nums[i]), y: parseFloat(nums[i+1]) });
+  }
+
+  const worldPts = pts.map(p => localToSvgUserCoords(el, p)).filter(Boolean);
+  if (worldPts.length !== pts.length) return;
+
+  const outlinePts = worldPts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+  const outline = document.createElementNS(SVG_NS, 'polygon');
+  outline.setAttribute('points', outlinePts);
+  outline.setAttribute('fill', 'rgba(37,99,235,0.06)');
+  outline.setAttribute('stroke', '#2563eb');
+  outline.setAttribute('stroke-width', '2');
+  outline.setAttribute('stroke-dasharray', '6,4');
+  outline.setAttribute('pointer-events', 'none');
+  grp.appendChild(outline);
+
+  worldPts.forEach((wp, i) => {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', wp.x.toFixed(1));
+    c.setAttribute('cy', wp.y.toFixed(1));
+    c.setAttribute('r', '18');
+    c.setAttribute('fill', '#ffffff');
+    c.setAttribute('stroke', '#2563eb');
+    c.setAttribute('stroke-width', '3.5');
+    c.setAttribute('class', 'vertex-handle');
+    c.setAttribute('data-index', i);
+    c.addEventListener('pointerdown', (e) => startVertexDrag(e, el, i));
+    grp.appendChild(c);
+  });
+
+  const d = getElementTransform(el);
+  for (let i = 0; i < pts.length; i++) {
+    const p1 = pts[i];
+    const p2 = pts[(i+1) % pts.length];
+    const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    const worldMid = localToSvgUserCoords(el, mid);
+    if (!worldMid) continue;
+
+    const localAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+    const worldAngle = localAngle + (d.angle || 0);
+
+    const rect = document.createElementNS(SVG_NS, 'rect');
+    rect.setAttribute('x', '-12');
+    rect.setAttribute('y', '-12');
+    rect.setAttribute('width', '24');
+    rect.setAttribute('height', '24');
+    rect.setAttribute('fill', '#2563eb');
+    rect.setAttribute('stroke', '#ffffff');
+    rect.setAttribute('stroke-width', '3');
+    rect.setAttribute('class', 'edge-handle');
+    rect.setAttribute('transform', 'translate(' + worldMid.x.toFixed(1) + ', ' + worldMid.y.toFixed(1) + ') rotate(' + worldAngle.toFixed(2) + ')');
+    
+    rect.addEventListener('pointerdown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      pts.splice(i + 1, 0, mid);
+      const newPointsStr = pts.map(p => p.x.toFixed(1) + ',' + p.y.toFixed(1)).join(' ');
+      poly.setAttribute('points', newPointsStr);
+      const hitPoly = el.querySelector('polygon[stroke="transparent"]') || el.querySelector('polygon[pointer-events="all"]');
+      if (hitPoly) hitPoly.setAttribute('points', newPointsStr);
+      invalidateShapeAnchorCache();
+      renderSelectionOverlay();
+      scheduleAutoSave();
+      showToast('➕ പുതിയ കോൺ ചേർത്തു');
+    });
+    grp.appendChild(rect);
+  }
+}
+
 function renderSelectionOverlay() {
   const grp = document.getElementById('selectionOverlayGroup');
   grp.innerHTML = '';
-  if (lassoSelection.length === 0) { rotateHandleRefs = { line:null, circle:null, icon:null }; return; }
+  
+  if (lassoSelection.length === 0) { 
+    rotateHandleRefs = { line:null, circle:null, icon:null }; 
+    isNodeEditMode = false; 
+    return; 
+  }
+
+  if (isNodeEditMode && lassoSelection.length === 1 && lassoSelection[0].querySelector('polygon')) {
+    renderVertexEditOverlay(lassoSelection[0]);
+    return;
+  }
+
   const bbox = getSelectionBBox();
   if (!bbox || bbox.width === 0 || bbox.height === 0) return;
   const rect = document.createElementNS(SVG_NS,'rect');
@@ -1765,6 +2024,7 @@ function moveRotateHandle(mx, my) {
   if (rotateHandleRefs.line) { rotateHandleRefs.line.setAttribute('x2',mx); rotateHandleRefs.line.setAttribute('y2',my); }
 }
 function updateOverlayPositions(bbox) {
+  if (isNodeEditMode) return;
   const grp = document.getElementById('selectionOverlayGroup');
   const rect = grp.querySelector('rect');
   if (rect) { rect.setAttribute('x',bbox.x); rect.setAttribute('y',bbox.y); rect.setAttribute('width',bbox.width); rect.setAttribute('height',bbox.height); }
@@ -1787,6 +2047,16 @@ function updateOverlayPositions(bbox) {
   if (rotateHandleRefs.icon) { rotateHandleRefs.icon.setAttribute('x',rotX); rotateHandleRefs.icon.setAttribute('y',rotY); }
 }
 function setSelection(elements) {
+  if (isNodeEditMode) {
+    if (snapStateBeforeNodeEdit) {
+      roadSnapEnabled = snapStateBeforeNodeEdit.road;
+      gridSnapEnabled = snapStateBeforeNodeEdit.grid;
+      snapStateBeforeNodeEdit = null;
+      updateSnapButton();
+    }
+    isNodeEditMode = false;
+  }
+  
   lassoSelection.forEach(el => el.classList.remove('lasso-selected'));
   if (selectedElement) selectedElement.classList.remove('selected-element');
   lassoSelection = (elements||[]).filter(Boolean);
@@ -1794,7 +2064,18 @@ function setSelection(elements) {
   lassoSelection.forEach(el => el.classList.add('lasso-selected'));
   renderSelectionOverlay();
 }
-function clearSelection() { setSelection([]); }
+function clearSelection() { 
+  if (isNodeEditMode) {
+    if (snapStateBeforeNodeEdit) {
+      roadSnapEnabled = snapStateBeforeNodeEdit.road;
+      gridSnapEnabled = snapStateBeforeNodeEdit.grid;
+      snapStateBeforeNodeEdit = null;
+      updateSnapButton();
+    }
+    isNodeEditMode = false;
+  }
+  setSelection([]); 
+}
 function selectAllElements() {
   const items = document.querySelectorAll('#userDrawnLayer .drawn-item, #landmarksLayer .landmark-item');
   if (items.length === 0) return;
@@ -1959,6 +2240,113 @@ function stopSelectionRotate() {
 }
 
 /* ============================================================
+   VERTEX DRAG LOGIC
+   ============================================================ */
+function startVertexDrag(e, element, index) {
+  if (currentMode !== 'select') return;
+  e.preventDefault(); e.stopPropagation();
+  
+  const poly = element.querySelector('polygon');
+  if (!poly) return;
+  
+  const beforePoints = poly.getAttribute('points');
+  const pt = getSvgCoordinates(e);
+  
+  vertexDragState = {
+    element: element,
+    index: index,
+    startPt: pt,
+    beforePoints: beforePoints
+  };
+  
+  document.addEventListener('pointermove', onVertexDrag);
+  document.addEventListener('pointerup', stopVertexDrag);
+  document.addEventListener('pointercancel', stopVertexDrag);
+}
+
+function onVertexDrag(e) {
+  if (!vertexDragState) return;
+  e.preventDefault();
+  
+  const pt = getSvgCoordinates(e);
+  const { element, index } = vertexDragState;
+  
+  const localPt = svgUserToLocalCoords(element, pt);
+  if (!localPt) return;
+  
+  const poly = element.querySelector('polygon');
+  if (!poly) return;
+  
+  const pointsStr = poly.getAttribute('points');
+  const nums = pointsStr.match(/-?[\d.]+/g);
+  if (!nums) return;
+  
+  const pts = [];
+  for (let i = 0; i < nums.length; i += 2) {
+    pts.push({ x: parseFloat(nums[i]), y: parseFloat(nums[i+1]) });
+  }
+  
+  if (pts[index]) {
+    let newX = localPt.x;
+    let newY = localPt.y;
+    if (gridSnapEnabled) {
+      newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+      newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+    }
+    pts[index].x = Math.round(newX);
+    pts[index].y = Math.round(newY);
+    
+    const newPointsStr = pts.map(p => p.x + ',' + p.y).join(' ');
+    poly.setAttribute('points', newPointsStr);
+    
+    const hitPoly = element.querySelector('polygon[stroke="transparent"]') || element.querySelector('polygon[pointer-events="all"]');
+    if (hitPoly) hitPoly.setAttribute('points', newPointsStr);
+    
+    const layer = document.getElementById('tempDrawLayer');
+    if (layer) {
+       layer.innerHTML = '';
+       if (gridSnapEnabled) {
+          const worldSnappedPt = localToSvgUserCoords(element, { x: pts[index].x, y: pts[index].y });
+          if (worldSnappedPt) {
+             drawGridSnapIndicator(layer, worldSnappedPt);
+          }
+       }
+    }
+
+    renderSelectionOverlay();
+    invalidateShapeAnchorCache();
+  }
+}
+
+function stopVertexDrag() {
+  if (vertexDragState) {
+    const { element, beforePoints } = vertexDragState;
+    const poly = element.querySelector('polygon');
+    if (poly) {
+      const afterPoints = poly.getAttribute('points');
+      if (beforePoints !== afterPoints) {
+        drawnElementsHistory.push({
+          type: 'vertex-edit',
+          element: element,
+          before: beforePoints,
+          after: afterPoints
+        });
+        redoStack = [];
+        updateUndoButtons();
+        scheduleAutoSave();
+      }
+    }
+  }
+  vertexDragState = null;
+  const layer = document.getElementById('tempDrawLayer');
+  if (layer) layer.innerHTML = '';
+  
+  document.removeEventListener('pointermove', onVertexDrag);
+  document.removeEventListener('pointerup', stopVertexDrag);
+  document.removeEventListener('pointercancel', stopVertexDrag);
+}
+
+/* ============================================================
    MODE / SETTINGS
    ============================================================ */
 function setMode(mode) {
@@ -1982,6 +2370,11 @@ function setMode(mode) {
   if (mode !== 'select') svg.classList.add('mode-' + mode);
   const l2s = (prev === 'lasso' && mode === 'select');
   if (!l2s && mode !== 'select') clearSelection();
+  
+  if (mode !== 'pen') {
+      cancelTapPolygon();
+  }
+  
   refreshSizeSlider();
   scheduleAutoSave();
 }
@@ -2048,7 +2441,6 @@ function handleWheelZoom(e) {
   if (overSvg || e.ctrlKey) { e.preventDefault(); zoomBy(e.deltaY < 0 ? 1.1 : 0.9); }
 }
 
-/* ⭐ FIX 4: Shape markup — WHITE fills for closed shapes ⭐ */
 function shapeMarkup(shape, x1, y1, x2, y2, preview) {
   const c = drawColor, w = getEffectiveWidth(), o = getEffectiveOpacity();
   const op = o < 1 ? ' stroke-opacity="'+o.toFixed(2)+'"' : '';
@@ -2117,6 +2509,238 @@ function getHitAreaMarkup(svg) {
 }
 
 /* ============================================================
+   POLYGON POINT SORTING
+   ============================================================ */
+function sortPointsByAngle(points) {
+  if (points.length < 3) return points.slice();
+  
+  let cx = 0, cy = 0;
+  points.forEach(p => { cx += p.x; cy += p.y; });
+  cx /= points.length;
+  cy /= points.length;
+  
+  const withAngle = points.map((p, i) => ({
+    point: p,
+    angle: Math.atan2(p.y - cy, p.x - cx),
+    originalIndex: i
+  }));
+  
+  withAngle.sort((a, b) => b.angle - a.angle);
+  
+  const firstIdx = withAngle.findIndex(p => p.originalIndex === 0);
+  const rotated = withAngle.slice(firstIdx).concat(withAngle.slice(0, firstIdx));
+  
+  return rotated.map(p => p.point);
+}
+
+/* ============================================================
+   TAP POLYGON DRAWING LOGIC
+   ============================================================ */
+function showPolygonDrawControls() {
+    document.getElementById('polygonDrawControls').style.display = 'flex';
+}
+function cancelTapPolygon() {
+    tapPoints = [];
+    document.getElementById('polygonDrawControls').style.display = 'none';
+    document.getElementById('tempDrawLayer').innerHTML = '';
+}
+function undoLastTap() {
+    if (tapPoints.length > 0) {
+        tapPoints.pop();
+        if (tapPoints.length === 0) {
+            cancelTapPolygon();
+        } else {
+            renderTempTapPolygon();
+        }
+        showToast('↶ അവസാന പോയിന്റ് നീക്കം ചെയ്തു');
+    }
+}
+function deleteTapPoint(index) {
+    if (index < 0 || index >= tapPoints.length) return;
+    tapPoints.splice(index, 1);
+    if (tapPoints.length === 0) {
+        cancelTapPolygon();
+        showToast('🗑️ എല്ലാ പോയിന്റുകളും നീക്കം ചെയ്തു');
+    } else {
+        renderTempTapPolygon();
+        showToast('🗑️ പോയിന്റ് ' + (index + 1) + ' നീക്കം ചെയ്തു');
+    }
+}
+function handlePenTap(pt) {
+    const snappedPt = snapToGrid(pt);
+    if (tapPoints.length === 0) {
+        tapPoints.push({ x: snappedPt.x, y: snappedPt.y });
+        showPolygonDrawControls();
+    } else {
+        const distToFirst = Math.hypot(snappedPt.x - tapPoints[0].x, snappedPt.y - tapPoints[0].y);
+        if (tapPoints.length >= 3 && distToFirst < 25) {
+            finalizeTapPolygon();
+            return;
+        }
+        if (tapPoints.length > 2) {
+            const distToLast = Math.hypot(snappedPt.x - tapPoints[tapPoints.length - 1].x, snappedPt.y - tapPoints[tapPoints.length - 1].y);
+            if (distToLast < 25 && Date.now() - tapDrawStartTime < 350) {
+                finalizeTapPolygon();
+                return;
+            }
+        }
+        tapPoints.push({ x: snappedPt.x, y: snappedPt.y });
+    }
+    renderTempTapPolygon();
+}
+function renderTempTapPolygon() {
+    const layer = document.getElementById('tempDrawLayer');
+    layer.innerHTML = '';
+    if (tapPoints.length === 0) return;
+    
+    const sortedPoints = tapPoints.length >= 3 ? sortPointsByAngle(tapPoints) : tapPoints;
+    
+    if (sortedPoints.length > 1) {
+        let d = `M ${sortedPoints[0].x} ${sortedPoints[0].y}`;
+        for (let i = 1; i < sortedPoints.length; i++) {
+            d += ` L ${sortedPoints[i].x} ${sortedPoints[i].y}`;
+        }
+        if (sortedPoints.length > 2) {
+            d += ` Z`;
+        }
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('fill', sortedPoints.length > 2 ? 'rgba(37,99,235,0.1)' : 'none');
+        path.setAttribute('stroke', '#2563eb');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke-dasharray', '5,5');
+        path.setAttribute('pointer-events', 'none');
+        layer.appendChild(path);
+    }
+    
+    tapPoints.forEach((p, i) => {
+        const snapGroup = document.createElementNS(SVG_NS, 'g');
+        snapGroup.setAttribute('pointer-events', 'none');
+        
+        const c1 = document.createElementNS(SVG_NS, 'circle');
+        c1.setAttribute('cx', p.x); c1.setAttribute('cy', p.y);
+        c1.setAttribute('r', '12'); c1.setAttribute('fill', 'none');
+        c1.setAttribute('stroke', '#6366f1'); c1.setAttribute('stroke-width', '2');
+        c1.setAttribute('stroke-dasharray', '3,3');
+        snapGroup.appendChild(c1);
+
+        const ln1 = document.createElementNS(SVG_NS, 'line');
+        ln1.setAttribute('x1', p.x - 15); ln1.setAttribute('y1', p.y);
+        ln1.setAttribute('x2', p.x + 15); ln1.setAttribute('y2', p.y);
+        ln1.setAttribute('stroke', '#6366f1'); ln1.setAttribute('stroke-width', '2');
+        snapGroup.appendChild(ln1);
+
+        const ln2 = document.createElementNS(SVG_NS, 'line');
+        ln2.setAttribute('x1', p.x); ln2.setAttribute('y1', p.y - 15);
+        ln2.setAttribute('x2', p.x); ln2.setAttribute('y2', p.y + 15);
+        ln2.setAttribute('stroke', '#6366f1'); ln2.setAttribute('stroke-width', '2');
+        snapGroup.appendChild(ln2);
+        
+        layer.appendChild(snapGroup);
+
+        const c = document.createElementNS(SVG_NS, 'circle');
+        c.setAttribute('cx', p.x);
+        c.setAttribute('cy', p.y);
+        c.setAttribute('r', '10');
+        c.setAttribute('fill', '#ffffff');
+        c.setAttribute('stroke', '#2563eb');
+        c.setAttribute('stroke-width', '3');
+        c.setAttribute('pointer-events', 'none');
+        layer.appendChild(c);
+
+        const innerDot = document.createElementNS(SVG_NS, 'circle');
+        innerDot.setAttribute('cx', p.x);
+        innerDot.setAttribute('cy', p.y);
+        innerDot.setAttribute('r', '4');
+        innerDot.setAttribute('fill', '#2563eb');
+        innerDot.setAttribute('pointer-events', 'none');
+        layer.appendChild(innerDot);
+
+        const text = document.createElementNS(SVG_NS, 'text');
+        text.setAttribute('x', p.x);
+        text.setAttribute('y', p.y - 20);
+        text.setAttribute('font-size', '13');
+        text.setAttribute('font-weight', 'bold');
+        text.setAttribute('fill', '#2563eb');
+        text.setAttribute('text-anchor', 'middle');
+        text.textContent = (i + 1);
+        text.setAttribute('pointer-events', 'none');
+        layer.appendChild(text);
+
+        const delBtn = document.createElementNS(SVG_NS, 'g');
+        delBtn.setAttribute('class', 'tap-point-delete');
+        delBtn.setAttribute('pointer-events', 'all');
+        delBtn.style.cursor = 'pointer';
+        
+        const delX = p.x + 22;
+        const delY = p.y - 22;
+        
+        const delCircle = document.createElementNS(SVG_NS, 'circle');
+        delCircle.setAttribute('cx', delX);
+        delCircle.setAttribute('cy', delY);
+        delCircle.setAttribute('r', '11');
+        delCircle.setAttribute('fill', '#dc2626');
+        delCircle.setAttribute('stroke', '#ffffff');
+        delCircle.setAttribute('stroke-width', '2.5');
+        delBtn.appendChild(delCircle);
+        
+        const delText = document.createElementNS(SVG_NS, 'text');
+        delText.setAttribute('x', delX);
+        delText.setAttribute('y', delY);
+        delText.setAttribute('font-size', '14');
+        delText.setAttribute('font-weight', 'bold');
+        delText.setAttribute('fill', '#ffffff');
+        delText.setAttribute('text-anchor', 'middle');
+        delText.setAttribute('dominant-baseline', 'central');
+        delText.textContent = '✕';
+        delText.setAttribute('pointer-events', 'none');
+        delBtn.appendChild(delText);
+
+        delBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            skipNextCanvasEvent = true;
+            setTimeout(() => { skipNextCanvasEvent = false; }, 350);
+            deleteTapPoint(i);
+        });
+        delBtn.addEventListener('pointerup', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        layer.appendChild(delBtn);
+
+        if (i === 0 && tapPoints.length >= 3) {
+            const outer = document.createElementNS(SVG_NS, 'circle');
+            outer.setAttribute('cx', p.x);
+            outer.setAttribute('cy', p.y);
+            outer.setAttribute('r', '18');
+            outer.setAttribute('fill', 'none');
+            outer.setAttribute('stroke', '#10b981');
+            outer.setAttribute('stroke-width', '2.5');
+            outer.setAttribute('stroke-dasharray', '4,4');
+            outer.setAttribute('pointer-events', 'none');
+            layer.appendChild(outer);
+        }
+    });
+}
+function finalizeTapPolygon() {
+    if (tapPoints.length < 3) {
+        cancelTapPolygon();
+        return;
+    }
+    const sortedPoints = sortPointsByAngle(tapPoints);
+    const pointsStr = sortedPoints.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    const svg = `<polygon points="${pointsStr}" fill="#ffffff" stroke="${drawColor}" stroke-width="${getEffectiveWidth()}" stroke-linejoin="round"/>`;
+    const id = 'drawn_elem_' + (++drawnElementIdCounter);
+    const g = newDrawnGroup(id);
+    g.innerHTML = svg + getHitAreaMarkup(svg);
+    registerDrawn(g);
+    cancelTapPolygon();
+    showToast('✅ പോളിഗോൺ ചേർത്തു');
+}
+
+/* ============================================================
    GLOBAL POINTER (long-press → select)
    ============================================================ */
 function onGlobalPointerDown(e) {
@@ -2125,7 +2749,7 @@ function onGlobalPointerDown(e) {
   if (activePointers.size >= 1) return;
   if (currentMode === 'eraser') return;
   if (currentMode === 'select') return;
-  if (e.target.closest && (e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle'))) return;
+  if (e.target.closest && (e.target.closest('.tap-point-delete') || e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle') || e.target.closest('.vertex-handle') || e.target.closest('.edge-handle'))) return;
   const svg = document.getElementById('sketchSvg');
   let node = e.target, sketchEl = null;
   while (node && node !== svg) {
@@ -2207,7 +2831,7 @@ function onGlobalPointerUp(e) {
 }
 
 /* ============================================================
-   ⭐ FIX 1: WINDOWS DOUBLE-CLICK → SELECT ⭐
+   WINDOWS DOUBLE-CLICK → SELECT OR NODE EDIT
    ============================================================ */
 function onSvgDoubleClick(e) {
   if (!IS_WINDOWS) return;
@@ -2223,6 +2847,14 @@ function onSvgDoubleClick(e) {
   e.preventDefault(); e.stopPropagation();
   if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
   longPressElement = null; longPressStartPt = null;
+
+  if (lassoSelection.includes(sketchEl) && lassoSelection.length === 1) {
+    if (canEditVertices(sketchEl)) {
+      toggleNodeEditMode(sketchEl);
+      return;
+    }
+  }
+
   if (currentMode !== 'select') {
     previousToolBeforeLongPress = currentMode;
     enterSelectMode();
@@ -2277,6 +2909,9 @@ function isLeftMouseButton(e) {
 }
 
 function onCanvasDown(e) {
+  if (skipNextCanvasEvent) return;
+  if (e.target && e.target.closest && e.target.closest('.tap-point-delete')) return;
+  
   if (e.pointerId !== undefined) activePointers.set(e.pointerId, getClientPoint(e));
   if (activePointers.size === 2) { e.preventDefault(); cancelActiveDrawing(); startPinch(); return; }
   if (activePointers.size > 2) { e.preventDefault(); return; }
@@ -2284,7 +2919,6 @@ function onCanvasDown(e) {
   if (activePointerId !== null && e.pointerId !== undefined && e.pointerId !== activePointerId) return;
   if (e.isPrimary === false) return;
 
-  /* ⭐ FIX 2 & 3: Landmark placement — Snap applied, stays armed for multiple ⭐ */
   if (pendingLandmarkType) {
     e.preventDefault();
     const lpt = snapToGrid(getSvgCoordinates(e));
@@ -2293,7 +2927,7 @@ function onCanvasDown(e) {
   }
 
   const target = e.target;
-  if (target.closest && (target.closest('.rotate-handle') || target.closest('.resize-handle'))) return;
+  if (target.closest && (target.closest('.rotate-handle') || target.closest('.resize-handle') || target.closest('.vertex-handle') || target.closest('.edge-handle'))) return;
   let pt = getSvgCoordinates(e);
   if (currentMode === 'select') {
     if (target.closest && target.closest('.handle')) return;
@@ -2344,8 +2978,13 @@ function onCanvasDown(e) {
   if (e.pointerId !== undefined) activePointerId = e.pointerId;
   pt = snapToGrid(pt);
   isDrawing = true; drawStartPt = pt;
-  if (currentMode === 'road' || (currentMode === 'shape' && isRoadShapeType(currentShapeType))) invalidateShapeAnchorCache();
-  if (currentMode === 'pen' || currentMode === 'highlighter') freehandPoints = [pt];
+  if (currentMode === 'pen' || currentMode === 'highlighter') {
+      if (currentMode === 'pen') {
+          tapDrawStartTime = Date.now();
+          tapDrawStartPt = { x: pt.x, y: pt.y };
+      }
+      freehandPoints = [pt];
+  }
   else if (currentMode === 'road') roadPoints = [pt];
   else if (currentMode === 'lasso') { lassoPoints = [pt]; clearSelection(); }
   updateTempShape(pt);
@@ -2358,12 +2997,33 @@ function onCanvasMove(e) {
   e.preventDefault();
   if (currentMode === 'eraser') { eraseAtEvent(e); return; }
   const pt = getSvgCoordinates(e);
+  
+  if (currentMode === 'pen' && tapPoints.length > 0) {
+    const distFromStart = Math.hypot(pt.x - tapDrawStartPt.x, pt.y - tapDrawStartPt.y);
+    if (distFromStart > 15) {
+      cancelTapPolygon();
+    }
+  }
+  
   if (currentMode === 'pen' || currentMode === 'highlighter') freehandPoints.push(pt);
   else if (currentMode === 'road') roadPoints.push(pt);
   else if (currentMode === 'lasso') lassoPoints.push(pt);
   updateTempShape(pt);
 }
 function onCanvasUp(e) {
+  if (skipNextCanvasEvent) { 
+    if (e.pointerId !== undefined) activePointers.delete(e.pointerId);
+    activePointerId = null;
+    isDrawing = false;
+    return; 
+  }
+  if (e.target && e.target.closest && e.target.closest('.tap-point-delete')) {
+    if (e.pointerId !== undefined) activePointers.delete(e.pointerId);
+    activePointerId = null;
+    isDrawing = false;
+    return;
+  }
+  
   if (e.pointerId !== undefined) {
     activePointers.delete(e.pointerId);
     if (activePointers.size < 2 && pinchState) endPinch();
@@ -2374,11 +3034,26 @@ function onCanvasUp(e) {
   isDrawing = false;
   let pt = getSvgCoordinates(e);
   pt = snapToGrid(pt);
+  
+  let wasTap = false;
+  
   if (currentMode === 'eraser') { lastErasePt = null; finalizeEraserStroke(); }
   else if (currentMode === 'pen' || currentMode === 'highlighter') {
-    const lastPt = freehandPoints[freehandPoints.length-1];
-    if (!lastPt || Math.hypot(pt.x-lastPt.x, pt.y-lastPt.y) > 0.5) freehandPoints.push(pt);
-    if (freehandPoints.length > 2) commitFreehand();
+    if (currentMode === 'pen') {
+      const duration = Date.now() - tapDrawStartTime;
+      const dist = Math.hypot(pt.x - tapDrawStartPt.x, pt.y - tapDrawStartPt.y);
+      if (duration < 250 && dist < 10) {
+        handlePenTap(pt);
+        wasTap = true;
+      } else {
+        if (tapPoints.length > 0) cancelTapPolygon();
+      }
+    }
+    if (!wasTap) {
+      const lastPt = freehandPoints[freehandPoints.length-1];
+      if (!lastPt || Math.hypot(pt.x-lastPt.x, pt.y-lastPt.y) > 0.5) freehandPoints.push(pt);
+      if (freehandPoints.length > 2) commitFreehand();
+    }
   }
   else if (currentMode === 'road') {
     const lastPt = roadPoints[roadPoints.length-1];
@@ -2394,11 +3069,20 @@ function onCanvasUp(e) {
     const d = Math.hypot(pt.x-drawStartPt.x, pt.y-drawStartPt.y);
     if (d > 5) commitShape(pt);
   }
-  document.getElementById('tempDrawLayer').innerHTML = '';
+  
+  if (!wasTap && tapPoints.length === 0) {
+    document.getElementById('tempDrawLayer').innerHTML = '';
+  }
   freehandPoints = []; lassoPoints = []; roadPoints = [];
 }
 function updateTempShape(pt) {
   const layer = document.getElementById('tempDrawLayer');
+  
+  if (tapPoints.length > 0 && currentMode === 'pen' && freehandPoints.length < 3) {
+    renderTempTapPolygon();
+    return;
+  }
+  
   layer.innerHTML = '';
   let snappedPt = pt;
   if (gridSnapEnabled && currentMode === 'shape') {
@@ -2787,6 +3471,11 @@ function undoDraw() {
     item.changes.forEach(c => { if (c.el && c.el.parentNode) c.el.setAttribute('transform', c.before); });
     redoStack.push(item);
     if (lassoSelection.length > 0) renderSelectionOverlay();
+  } else if (item.type === 'vertex-edit') {
+    const poly = item.element.querySelector('polygon');
+    if (poly) poly.setAttribute('points', item.before);
+    redoStack.push(item);
+    renderSelectionOverlay();
   } else if (item.type === 'erase-elements') {
     item.items.forEach(it => {
       if (it.parent) {
@@ -2813,6 +3502,10 @@ function redoDraw() {
   if (item.type === 'transform') {
     item.changes.forEach(c => { if (c.el && c.el.parentNode) c.el.setAttribute('transform', c.after); });
     if (lassoSelection.length > 0) renderSelectionOverlay();
+  } else if (item.type === 'vertex-edit') {
+    const poly = item.element.querySelector('polygon');
+    if (poly) poly.setAttribute('points', item.after);
+    renderSelectionOverlay();
   } else if (item.type === 'erase-elements') {
     item.items.forEach(it => { if (it.node && it.node.parentNode) it.node.parentNode.removeChild(it.node); });
   } else if (item.type === 'erase-marks') {
@@ -2831,11 +3524,13 @@ function removeDrawnElement(id) {
   el.remove();
   drawnElementsHistory = drawnElementsHistory.filter(i => {
     if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+    if (i.type === 'vertex-edit') return i.element !== el;
     if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
     return i.id !== id;
   });
   redoStack = redoStack.filter(i => {
     if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+    if (i.type === 'vertex-edit') return i.element !== el;
     if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
     return i.id !== id;
   });
@@ -2854,6 +3549,9 @@ function clearUserDrawn() {
   eraserStrokeMarks = null; eraserStrokeRemoved = null;
   previousToolBeforeLongPress = null; longPressMoveState = null;
   snapStateBeforeSelect = null;
+  isNodeEditMode = false;
+  snapStateBeforeNodeEdit = null;
+  cancelTapPolygon();
   cancelPendingLandmark();
   invalidateShapeAnchorCache();
   clearSelection(); updateUndoButtons(); scheduleAutoSave();
@@ -2952,9 +3650,11 @@ function setupDraggable(element) {
   function startDrag(e) {
     if (currentMode !== 'select') return;
     if (!isLeftMouseButton(e)) return;
-    if (e.target.closest && (e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle'))) return;
-    const isText = element.classList && element.classList.contains('text-item');
+    if (e.target.closest && (e.target.closest('.tap-point-delete') || e.target.closest('.handle') || e.target.closest('.rotate-handle') || e.target.closest('.resize-handle') || e.target.closest('.vertex-handle') || e.target.closest('.edge-handle'))) return;
+    
     const pt = getSvgCoordinates(e);
+    const isText = element.classList && element.classList.contains('text-item');
+    
     if (isText) {
       const now = Date.now();
       if (lastTap.id === element.id && (now-lastTap.time) < 500) {
@@ -2965,7 +3665,19 @@ function setupDraggable(element) {
         return;
       }
       lastTap = { id:element.id, time:now };
+    } else if (canEditVertices(element)) {
+      const now = Date.now();
+      if (lastTap.id === element.id && (now-lastTap.time) < 500) {
+        lastTap = { id:null, time:0 };
+        if (lassoSelection.includes(element) && lassoSelection.length === 1) {
+          toggleNodeEditMode(element);
+          return;
+        }
+      } else {
+        lastTap = { id:element.id, time:now };
+      }
     }
+    
     if (lassoSelection.length > 0 && isPointInSelection(pt)) {
       e.preventDefault(); e.stopPropagation();
       startSelectionMove(e); return;
@@ -3022,7 +3734,6 @@ function stopElemDrag() {
    ============================================================ */
 const LANDMARK_LABEL = { well:'കിണർ', house:'വീട്', tree:'മരം', gate:'ഗേറ്റ്', arrow:'അമ്പ്' };
 
-/* ⭐ FIX 2 & 3: Toggle to arm, stays armed for multiple placements ⭐ */
 function armLandmark(type) {
   if (pendingLandmarkType === type) { cancelPendingLandmark(); showToast('✖️ അടയാളം റദ്ദാക്കി'); return; }
   pendingLandmarkType = type;
@@ -3056,7 +3767,6 @@ function addLandmark(type, x, y) {
   } else if (type === 'gate') {
     g.innerHTML = '<rect x="-14" y="-4" width="28" height="8" fill="#f3e8ff" stroke="#7e22ce" stroke-width="2"/><line x1="-7" y1="-4" x2="-7" y2="4" stroke="#7e22ce" stroke-width="1.5"/><line x1="7" y1="-4" x2="7" y2="4" stroke="#7e22ce" stroke-width="1.5"/><text x="0" y="20" font-size="10" font-weight="bold" text-anchor="middle" fill="#6b21a8">ഗേറ്റ്</text><rect x="-20" y="-20" width="40" height="40" fill="transparent" pointer-events="all"/>';
   } else if (type === 'arrow') {
-    /* ⭐ FIX 2: Small black arrow, no text ⭐ */
     g.innerHTML = '<line x1="-13" y1="0" x2="8" y2="0" stroke="#000000" stroke-width="2.2" stroke-linecap="round"/><polygon points="15,0 6,-6 6,6" fill="#000000"/><circle cx="0" cy="0" r="16" fill="transparent" pointer-events="all"/>';
   }
   document.getElementById('landmarksLayer').appendChild(g);
@@ -3072,11 +3782,13 @@ function removeLandmark(id) {
   el.remove();
   drawnElementsHistory = drawnElementsHistory.filter(i => {
     if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+    if (i.type === 'vertex-edit') return i.element !== el;
     if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
     return true;
   });
   redoStack = redoStack.filter(i => {
     if (i.type === 'transform') { i.changes = i.changes.filter(c => c.el !== el); return i.changes.length > 0; }
+    if (i.type === 'vertex-edit') return i.element !== el;
     if (i.type === 'erase-elements') { i.items = i.items.filter(it => it.node !== el); return i.items.length > 0; }
     return true;
   });
@@ -3111,6 +3823,8 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Delete' || e.key === 'Backspace') { if (lassoSelection.length) { e.preventDefault(); deleteSelected(); } return; }
   if (e.key === 'Escape') {
     if (pendingLandmarkType) { cancelPendingLandmark(); showToast('✖️ അടയാളം റദ്ദാക്കി'); return; }
+    if (isNodeEditMode) { toggleNodeEditMode(null); return; }
+    if (tapPoints.length > 0) { cancelTapPolygon(); showToast('✖️ പോളിഗോൺ റദ്ദാക്കി'); return; }
     if (previousToolBeforeLongPress) {
       const restoreMode = previousToolBeforeLongPress;
       previousToolBeforeLongPress = null;
