@@ -1,4 +1,4 @@
-const CACHE_NAME = 'village-sketch-v1';
+const CACHE_NAME = 'village-sketch-v2';
 const urlsToCache = [
   './w2.9.html',
   './manifest.json'
